@@ -44,6 +44,7 @@ const getDate = (date: any) => {
     }
 }
 
+export function MatchCard({ match, currentUser, showRoast = false }: MatchCardProps) {
     const outcome = getOutcome(match, currentUser.id);
 
     // Determine which side the uploader is on to assign avatars correctly
