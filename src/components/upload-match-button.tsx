@@ -391,7 +391,7 @@ export function UploadMatchButton() {
             }
 
             const matchData: Omit<Match, 'id'> = {
-                userId: appUser.id,
+                createdBy: appUser.id,
                 opponentId: opponent.id,
                 participants: [appUser.id, opponent.id],
                 date: serverTimestamp(),

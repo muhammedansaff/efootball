@@ -47,37 +47,38 @@ const getDate = (date: any) => {
 export function MatchCard({ match, currentUser, showRoast = false }: MatchCardProps) {
     const outcome = getOutcome(match, currentUser.id);
 
-    // Determine which side the uploader is on to assign avatars correctly
-    // Default to Team 1 for old matches (where uploader was always put in team1Stats)
-    const isUploaderTeam1 = match.userTeamSide ? match.userTeamSide === 'team1' : true;
-
-    // We need to know if the CURRENT USER is the uploader to decide which avatar to use where
-    const isCurrentUserUploader = match.userId === currentUser.id;
-
-    // If current user is uploader:
-    //   Team 1 Avatar = Current User Avatar (if isUploaderTeam1)
-    //   Team 2 Avatar = Current User Avatar (if !isUploaderTeam1)
+    // Determine avatars based on userId in stats
+    // If team1Stats.userId matches currentUser, show currentUser avatar.
+    // If team2Stats.userId matches currentUser, show currentUser avatar.
+    // For the opponent, we don't always have the avatar URL unless we fetch it.
+    // However, we can try to infer it if we know the match participants.
     
-    // But wait, we only have currentUser.avatarUrl. We don't have opponent's avatarUrl in the match object.
-    // So we can only show the avatar for the currentUser if they are in the match.
+    // Logic:
+    // 1. If team1Stats.userId === currentUser.id -> Team 1 is Current User
+    // 2. If team2Stats.userId === currentUser.id -> Team 2 is Current User
     
     let team1AvatarUrl = '';
     let team2AvatarUrl = '';
 
-    if (isCurrentUserUploader) {
-        if (isUploaderTeam1) team1AvatarUrl = currentUser.avatarUrl;
-        else team2AvatarUrl = currentUser.avatarUrl;
+    // Check if we have userIds in stats (new matches)
+    if (match.team1Stats.userId || match.team2Stats.userId) {
+        if (match.team1Stats.userId === currentUser.id) {
+            team1AvatarUrl = currentUser.avatarUrl;
+        }
+        if (match.team2Stats.userId === currentUser.id) {
+            team2AvatarUrl = currentUser.avatarUrl;
+        }
     } else {
-        // If viewing someone else's match, we don't have their avatar easily available 
-        // unless we fetch it or it was passed in. 
-        // For now, let's just use the fallback initials.
+        // Fallback for old matches without userIds in stats
+        // Use the old logic: check createdBy/userId and userTeamSide
+        const uploaderId = match.createdBy || (match as any).userId;
+        const isUploaderTeam1 = match.userTeamSide ? match.userTeamSide === 'team1' : true; // Default to true for very old matches
+        
+        if (uploaderId === currentUser.id) {
+            if (isUploaderTeam1) team1AvatarUrl = currentUser.avatarUrl;
+            else team2AvatarUrl = currentUser.avatarUrl;
+        }
     }
-
-    const outcomeBgClass = {
-        'win': 'bg-primary/10 border-primary/50',
-        'loss': 'bg-destructive/10 border-destructive/50',
-        'draw': 'bg-muted/10 border-muted/50'
-    }[outcome];
 
     return (
         <Card className={cn("transition-all hover:shadow-lg hover:shadow-primary/10", outcomeBgClass)}>
@@ -96,9 +97,9 @@ export function MatchCard({ match, currentUser, showRoast = false }: MatchCardPr
                         {/* Score */}
                         <div className="text-center">
                             <div className="flex items-center gap-2">
-                                <span className={cn("font-headline text-4xl", outcome === 'win' && isUploaderTeam1 && 'text-primary')}>{match.team1Stats.score}</span>
+                                <span className="font-headline text-4xl">{match.team1Stats.score}</span>
                                 <span className="font-headline text-2xl text-muted-foreground">-</span>
-                                <span className={cn("font-headline text-4xl", outcome === 'win' && !isUploaderTeam1 && 'text-primary')}>{match.team2Stats.score}</span>
+                                <span className="font-headline text-4xl">{match.team2Stats.score}</span>
                             </div>
                             <div className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-2">
                                 <OutcomeIcon outcome={outcome} />

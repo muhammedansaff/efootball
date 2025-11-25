@@ -48,7 +48,9 @@ export type User = {
 
 export type Match = {
   id: string;
-  userId: string; // The user who uploaded the match
+  id: string;
+  createdBy: string; // The user who uploaded the match (formerly userId)
+  opponentId: string;
   opponentId: string;
   participants: string[]; // Array with userId and opponentId
   date: string | Timestamp;
