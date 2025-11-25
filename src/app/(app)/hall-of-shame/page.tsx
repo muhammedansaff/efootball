@@ -10,7 +10,8 @@ import { collection, query, orderBy, limit } from "firebase/firestore";
 import type { HallEntry, User } from "@/lib/types";
 import { formatDistanceToNow } from 'date-fns';
 import { Timestamp } from "firebase/firestore";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import Image from "next/image";
 
 export default function HallOfFameAndShamePage() {
@@ -185,6 +186,9 @@ export default function HallOfFameAndShamePage() {
             {/* Special Dialog for Dilsham's Hall of Fame */}
             <Dialog open={showDilshamDialog} onOpenChange={setShowDilshamDialog}>
                 <DialogContent className="max-w-4xl w-full p-0 overflow-hidden bg-transparent border-none">
+                    <VisuallyHidden>
+                        <DialogTitle>Dilsham Hall of Fame Celebration</DialogTitle>
+                    </VisuallyHidden>
                     <div className="relative w-full aspect-video">
                         <Image 
                             src="/dilsham_image.png" 
