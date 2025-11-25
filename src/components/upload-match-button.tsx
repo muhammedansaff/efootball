@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Upload, FileImage, Loader2, Plus, Crown, Trophy } from "lucide-react";
