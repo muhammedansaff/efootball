@@ -3,7 +3,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Card, CardContent } from "./ui/card";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from 'date-fns';
-import { Trophy, Skull, Shield, MessageSquareQuote, ChevronsRight, Crown } from "lucide-react";
+import { Trophy, Skull, Shield, MessageSquareQuote, ChevronsRight } from "lucide-react";
+import { Crown } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 
