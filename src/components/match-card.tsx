@@ -44,64 +44,54 @@ const getDate = (date: any) => {
     }
 }
 
-export function MatchCard({ match, currentUser, showRoast = false }: MatchCardProps) {
     const outcome = getOutcome(match, currentUser.id);
 
-    // Determine if current user is Team 1
-    let isUserTeam1 = false;
-    
-    if (match.userTeamSide) {
-        // New matches have explicit side
-        if (match.userId === currentUser.id) {
-            isUserTeam1 = match.userTeamSide === 'team1';
-        } else {
-            // If viewing as opponent, flip the side
-            isUserTeam1 = match.userTeamSide === 'team2';
-        }
-    } else {
-        // Fallback for old matches:
-        // In the old upload logic, team1Stats ALWAYS contained the creator's stats regardless of team name.
-        // So if the current user is the creator, they are effectively "Team 1" for stat display purposes.
-        if (match.userId === currentUser.id) {
-            isUserTeam1 = true;
-        } else {
-            // If viewing as opponent (not the creator), then I am Team 2
-            // (assuming the creator was Team 1)
-            isUserTeam1 = false;
-        }
-    }
-    const user = isUserTeam1 ? { name: match.team1Name, avatarUrl: currentUser.avatarUrl } : { name: match.team2Name, avatarUrl: currentUser.avatarUrl };
-    const opponent = { name: isUserTeam1 ? match.team2Name : match.team1Name, avatarUrl: '' }; // opponent avatar not stored in match
-    
-    const userScore = isUserTeam1 ? match.team1Stats.score : match.team2Stats.score;
-    const opponentScore = isUserTeam1 ? match.team2Stats.score : match.team1Stats.score;
+    // Determine which side the uploader is on to assign avatars correctly
+    // Default to Team 1 for old matches (where uploader was always put in team1Stats)
+    const isUploaderTeam1 = match.userTeamSide ? match.userTeamSide === 'team1' : true;
 
-    const outcomeBgClass = {
-        'win': 'bg-primary/10 border-primary/50',
-        'loss': 'bg-destructive/10 border-destructive/50',
-        'draw': 'bg-muted/10 border-muted/50'
-    }[outcome];
+    // We need to know if the CURRENT USER is the uploader to decide which avatar to use where
+    const isCurrentUserUploader = match.userId === currentUser.id;
+
+    // If current user is uploader:
+    //   Team 1 Avatar = Current User Avatar (if isUploaderTeam1)
+    //   Team 2 Avatar = Current User Avatar (if !isUploaderTeam1)
+    
+    // But wait, we only have currentUser.avatarUrl. We don't have opponent's avatarUrl in the match object.
+    // So we can only show the avatar for the currentUser if they are in the match.
+    
+    let team1AvatarUrl = '';
+    let team2AvatarUrl = '';
+
+    if (isCurrentUserUploader) {
+        if (isUploaderTeam1) team1AvatarUrl = currentUser.avatarUrl;
+        else team2AvatarUrl = currentUser.avatarUrl;
+    } else {
+        // If viewing someone else's match, we don't have their avatar easily available 
+        // unless we fetch it or it was passed in. 
+        // For now, let's just use the fallback initials.
+    }
 
     return (
         <Card className={cn("transition-all hover:shadow-lg hover:shadow-primary/10", outcomeBgClass)}>
             <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                     <div className="grid flex-grow grid-cols-[1fr_auto_1fr] items-center gap-4">
-                        {/* User */}
+                        {/* Team 1 (Left) */}
                         <div className="flex items-center gap-3 justify-end">
-                            <span className="font-semibold text-right truncate">{user.name}</span>
+                            <span className="font-semibold text-right truncate">{match.team1Name}</span>
                             <Avatar>
-                                <AvatarImage src={user.avatarUrl} alt={user.name} />
-                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                <AvatarImage src={team1AvatarUrl} alt={match.team1Name} />
+                                <AvatarFallback>{match.team1Name.charAt(0)}</AvatarFallback>
                             </Avatar>
                         </div>
 
                         {/* Score */}
                         <div className="text-center">
                             <div className="flex items-center gap-2">
-                                <span className={cn("font-headline text-4xl", outcome === 'win' && 'text-primary')}>{userScore}</span>
+                                <span className={cn("font-headline text-4xl", outcome === 'win' && isUploaderTeam1 && 'text-primary')}>{match.team1Stats.score}</span>
                                 <span className="font-headline text-2xl text-muted-foreground">-</span>
-                                <span className={cn("font-headline text-4xl", outcome === 'loss' && 'text-destructive/80')}>{opponentScore}</span>
+                                <span className={cn("font-headline text-4xl", outcome === 'win' && !isUploaderTeam1 && 'text-primary')}>{match.team2Stats.score}</span>
                             </div>
                             <div className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-2">
                                 <OutcomeIcon outcome={outcome} />
@@ -109,12 +99,13 @@ export function MatchCard({ match, currentUser, showRoast = false }: MatchCardPr
                             </div>
                         </div>
 
-                        {/* Opponent */}
+                        {/* Team 2 (Right) */}
                         <div className="flex items-center gap-3 justify-start">
                              <Avatar>
-                                <AvatarFallback>{opponent.name.charAt(0)}</AvatarFallback>
+                                <AvatarImage src={team2AvatarUrl} alt={match.team2Name} />
+                                <AvatarFallback>{match.team2Name.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <span className="font-semibold text-left truncate">{opponent.name}</span>
+                            <span className="font-semibold text-left truncate">{match.team2Name}</span>
                         </div>
                     </div>
                     <Link href={`/matches/${match.id}`} passHref>
