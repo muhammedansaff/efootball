@@ -59,8 +59,16 @@ export function MatchCard({ match, currentUser, showRoast = false }: MatchCardPr
             isUserTeam1 = match.userTeamSide === 'team2';
         }
     } else {
-        // Fallback for old matches: try name matching
-        isUserTeam1 = match.team1Name.toLowerCase().trim() === currentUser.name.toLowerCase().trim();
+        // Fallback for old matches:
+        // In the old upload logic, team1Stats ALWAYS contained the creator's stats regardless of team name.
+        // So if the current user is the creator, they are effectively "Team 1" for stat display purposes.
+        if (match.userId === currentUser.id) {
+            isUserTeam1 = true;
+        } else {
+            // If viewing as opponent (not the creator), then I am Team 2
+            // (assuming the creator was Team 1)
+            isUserTeam1 = false;
+        }
     }
     const user = isUserTeam1 ? { name: match.team1Name, avatarUrl: currentUser.avatarUrl } : { name: match.team2Name, avatarUrl: currentUser.avatarUrl };
     const opponent = { name: isUserTeam1 ? match.team2Name : match.team1Name, avatarUrl: '' }; // opponent avatar not stored in match
