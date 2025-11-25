@@ -1,0 +1,445 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user in the Football Banter Barn application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user entity."
+        },
+        "googleId": {
+          "type": "string",
+          "description": "The unique Google ID of the user."
+        },
+        "username": {
+          "type": "string",
+          "description": "The username of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user.",
+          "format": "email"
+        },
+        "profilePictureUrl": {
+          "type": "string",
+          "description": "URL of the user's profile picture.",
+          "format": "uri"
+        },
+        "wins": {
+          "type": "number",
+          "description": "Number of wins the user has."
+        },
+        "losses": {
+          "type": "number",
+          "description": "Number of losses the user has."
+        },
+        "badges": {
+          "type": "array",
+          "description": "References to Badges earned by the user. (Relationship: User 1:N Badge)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "googleId",
+        "username",
+        "email"
+      ]
+    },
+    "Match": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Match",
+      "type": "object",
+      "description": "Represents a match played in the Football Banter Barn application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the match entity."
+        },
+        "participants": {
+          "type": "array",
+          "description": "An array containing the user IDs of the two participants.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "date": {
+          "type": "string",
+          "description": "Date and time when the match was played.",
+          "format": "date-time"
+        },
+        "team1Name": {
+          "type": "string"
+        },
+        "team2Name": {
+          "type": "string"
+        },
+        "team1Stats": {
+          "$ref": "#/backend/entities/PlayerStats"
+        },
+        "team2Stats": {
+          "$ref": "#/backend/entities/PlayerStats"
+        },
+        "winnerId": {
+          "type": "string",
+          "description": "The ID of the winning user, or 'draw'."
+        },
+        "roast": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "participants",
+        "date",
+        "team1Name",
+        "team2Name",
+        "team1Stats",
+        "team2Stats",
+        "winnerId"
+      ]
+    },
+    "Comment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Comment",
+      "type": "object",
+      "description": "Represents a comment on a match.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the comment."
+        },
+        "matchId": {
+          "type": "string",
+          "description": "Reference to the Match this comment belongs to. (Relationship: Match 1:N Comment)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who created the comment. (Relationship: User 1:N Comment)"
+        },
+        "commentText": {
+          "type": "string",
+          "description": "The text content of the comment."
+        },
+        "commentDate": {
+          "type": "string",
+          "description": "Date and time when the comment was posted.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "matchId",
+        "userId",
+        "commentText",
+        "commentDate"
+      ]
+    },
+    "Badge": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Badge",
+      "type": "object",
+      "description": "Represents a badge that a user can earn.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the badge."
+        },
+        "badgeName": {
+          "type": "string",
+          "description": "Name of the badge."
+        },
+        "badgeDescription": {
+          "type": "string",
+          "description": "Description of the badge and how to earn it."
+        },
+        "badgeImageUrl": {
+          "type": "string",
+          "description": "URL of the badge image.",
+          "format": "uri"
+        },
+        "badgeCriteria": {
+          "type": "string",
+          "description": "Criteria for earning the badge.  This could be code or a description that can be interpreted by the badge assignment logic."
+        }
+      },
+      "required": [
+        "id",
+        "badgeName",
+        "badgeDescription",
+        "badgeImageUrl",
+        "badgeCriteria"
+      ]
+    },
+    "Rivalry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Rivalry",
+      "type": "object",
+      "description": "Represents the rivalry between two users.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the rivalry."
+        },
+        "user1Id": {
+          "type": "string",
+          "description": "Reference to User 1 in the rivalry. (Relationship: User 1:N Rivalry)"
+        },
+        "user2Id": {
+          "type": "string",
+          "description": "Reference to User 2 in the rivalry. (Relationship: User 1:N Rivalry)"
+        },
+        "matchCount": {
+          "type": "number",
+          "description": "Number of matches played between the two users."
+        },
+        "user1Wins": {
+          "type": "number",
+          "description": "Number of wins for user 1 in the rivalry."
+        },
+        "user2Wins": {
+          "type": "number",
+          "description": "Number of wins for user 2 in the rivalry."
+        }
+      },
+      "required": [
+        "id",
+        "user1Id",
+        "user2Id",
+        "matchCount",
+        "user1Wins",
+        "user2Wins"
+      ]
+    },
+    "Milestone": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Milestone",
+      "type": "object",
+      "description": "Represents a journey milestone for users to achieve.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the milestone."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the milestone."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the milestone."
+        },
+        "stat": {
+          "type": "string",
+          "description": "The user statistic tracked for this milestone (e.g., 'wins', 'goalsFor')."
+        },
+        "target": {
+          "type": "number",
+          "description": "The target value for the stat to achieve the milestone."
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the milestone was last updated or created."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "stat",
+        "target"
+      ]
+    },
+    "HallEntry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "HallEntry",
+      "type": "object",
+      "description": "Represents an entry in the Hall of Fame & Shame.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "fame",
+            "shame"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the achievement or failure."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the event."
+        },
+        "matchId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "opponentId": {
+          "type": "string"
+        },
+        "stat": {
+          "type": "string",
+          "description": "The key statistic, e.g., 'Won by 5 goals' or '0 shots on target'."
+        },
+        "roast": {
+          "type": "string",
+          "description": "The generated roast or praise."
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "title",
+        "matchId",
+        "userId",
+        "opponentId",
+        "stat",
+        "roast",
+        "date"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information. Uses path-based ownership for private user data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/matches/{matchId}",
+        "definition": {
+          "entityName": "Match",
+          "schema": {
+            "$ref": "#/backend/entities/Match"
+          },
+          "description": "Stores all match data in a global collection. `participants` array contains the IDs of both players, allowing for queries to find all matches a user is involved in.",
+          "params": [
+            {
+              "name": "matchId",
+              "description": "The unique identifier for the match."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/matches/{matchId}/comments/{commentId}",
+        "definition": {
+          "entityName": "Comment",
+          "schema": {
+            "$ref": "#/backend/entities/Comment"
+          },
+          "description": "Stores comments associated with a specific match. Uses a hierarchical path for easy querying of comments for a match. Includes `userId` to identify the comment author.",
+          "params": [
+            {
+              "name": "matchId",
+              "description": "The unique identifier for the match."
+            },
+            {
+              "name": "commentId",
+              "description": "The unique identifier for the comment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/badges/{badgeId}",
+        "definition": {
+          "entityName": "Badge",
+          "schema": {
+            "$ref": "#/backend/entities/Badge"
+          },
+          "description": "Stores badge definitions. Accessible to all users for viewing badge information.",
+          "params": [
+            {
+              "name": "badgeId",
+              "description": "The unique identifier for the badge."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/rivalries/{rivalryId}",
+        "definition": {
+          "entityName": "Rivalry",
+          "schema": {
+            "$ref": "#/backend/entities/Rivalry"
+          },
+          "description": "Stores rivalry information between users. This could be a summary document updated by a cloud function, or managed on the client.",
+          "params": [
+            {
+              "name": "rivalryId",
+              "description": "The unique identifier for the rivalry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/milestones/{milestoneId}",
+        "definition": {
+          "entityName": "Milestone",
+          "schema": {
+            "$ref": "#/backend/entities/Milestone"
+          },
+          "description": "Stores journey milestone definitions. Accessible to all users for viewing.",
+          "params": [
+            {
+              "name": "milestoneId",
+              "description": "The unique identifier for the milestone."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/hallofshame/{entryId}",
+        "definition": {
+          "entityName": "HallEntry",
+          "schema": {
+            "$ref": "#/backend/entities/HallEntry"
+          },
+          "description": "Stores individual entries for the Hall of Fame & Shame.",
+          "params": [
+            {
+              "name": "entryId",
+              "description": "The unique identifier for the hall entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure is designed to support the Football Banter Barn application, focusing on secure, scalable, and debuggable data access. Key change is the move to a global `/matches` collection. This simplifies queries and resolves issues with fetching specific match details without knowing the owner, as `participants` array allows filtering. User data is in `/users/{userId}`. Other collections like `/badges`, `/milestones`, and `/hallofshame` are global as they contain public or aggregated data."
+  }
+}
