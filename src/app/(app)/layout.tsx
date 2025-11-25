@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainSidebar } from '@/components/main-sidebar';
 import { SiteHeader } from '@/components/site-header';
 import { BottomNavigation } from '@/components/bottom-navigation';
+import { DilshamVictorySticker } from '@/components/dilsham-victory-sticker';
 
 export default function AppLayout({
   children,
@@ -18,6 +19,7 @@ export default function AppLayout({
         <main className="flex-1 p-4 md:p-6 lg:p-8 mb-20 md:mb-0">{children}</main>
         <BottomNavigation />
       </SidebarInset>
+      <DilshamVictorySticker />
     </SidebarProvider>
   );
 }
