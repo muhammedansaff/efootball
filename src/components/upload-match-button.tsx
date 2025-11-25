@@ -366,6 +366,15 @@ export function UploadMatchButton() {
             const opponentStats = isUserTeam1 ? extractedStats.team2Stats : extractedStats.team1Stats;
             const winnerId = matchResult === 'win' ? appUser.id : matchResult === 'loss' ? opponent.id : 'draw';
             
+            // Inject user IDs into stats objects
+            if (isUserTeam1) {
+                extractedStats.team1Stats.userId = appUser.id;
+                extractedStats.team2Stats.userId = opponent.id;
+            } else {
+                extractedStats.team1Stats.userId = opponent.id;
+                extractedStats.team2Stats.userId = appUser.id;
+            }
+
             // Try to generate roast, but don't fail if it doesn't work
             let roastText = '';
             try {
@@ -391,8 +400,8 @@ export function UploadMatchButton() {
                 opponentName: opponent.name,
                 team1Name: extractedStats.team1Name,
                 team2Name: extractedStats.team2Name,
-                team1Stats: extractedStats.team1Stats, // Save exactly as extracted
-                team2Stats: extractedStats.team2Stats, // Save exactly as extracted
+                team1Stats: extractedStats.team1Stats, // Save exactly as extracted (now with userIds)
+                team2Stats: extractedStats.team2Stats, // Save exactly as extracted (now with userIds)
                 comments: [],
                 matchHash: matchHash,
                 userTeamSide: userTeamSide, // Explicitly save which side the user was on

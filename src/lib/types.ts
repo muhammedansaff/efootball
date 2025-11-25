@@ -18,6 +18,7 @@ export type PlayerStats = {
   saves: number;
   passAccuracy?: number;
   redCards?: number;
+  userId?: string;
 };
 
 
