@@ -37,6 +37,7 @@ const PlayerStatsSchema = z.object({
   saves: z.number().describe('Number of saves'),
   passAccuracy: z.number().optional().describe('Pass accuracy percentage'),
   redCards: z.number().optional().describe('Number of red cards'),
+  userId: z.string().optional().describe('ID of the user associated with these stats'),
 });
 export type PlayerStats = z.infer<typeof PlayerStatsSchema>;
 
