@@ -73,6 +73,12 @@ export function MatchCard({ match, currentUser, showRoast = false }: MatchCardPr
         // For now, let's just use the fallback initials.
     }
 
+    const outcomeBgClass = {
+        'win': 'bg-primary/10 border-primary/50',
+        'loss': 'bg-destructive/10 border-destructive/50',
+        'draw': 'bg-muted/10 border-muted/50'
+    }[outcome];
+
     return (
         <Card className={cn("transition-all hover:shadow-lg hover:shadow-primary/10", outcomeBgClass)}>
             <CardContent className="p-4">
