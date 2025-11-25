@@ -47,7 +47,21 @@ const getDate = (date: any) => {
 export function MatchCard({ match, currentUser, showRoast = false }: MatchCardProps) {
     const outcome = getOutcome(match, currentUser.id);
 
-    const isUserTeam1 = match.team1Name.toLowerCase().trim() === currentUser.name.toLowerCase().trim();
+    // Determine if current user is Team 1
+    let isUserTeam1 = false;
+    
+    if (match.userTeamSide) {
+        // New matches have explicit side
+        if (match.userId === currentUser.id) {
+            isUserTeam1 = match.userTeamSide === 'team1';
+        } else {
+            // If viewing as opponent, flip the side
+            isUserTeam1 = match.userTeamSide === 'team2';
+        }
+    } else {
+        // Fallback for old matches: try name matching
+        isUserTeam1 = match.team1Name.toLowerCase().trim() === currentUser.name.toLowerCase().trim();
+    }
     const user = isUserTeam1 ? { name: match.team1Name, avatarUrl: currentUser.avatarUrl } : { name: match.team2Name, avatarUrl: currentUser.avatarUrl };
     const opponent = { name: isUserTeam1 ? match.team2Name : match.team1Name, avatarUrl: '' }; // opponent avatar not stored in match
     

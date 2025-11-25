@@ -391,10 +391,11 @@ export function UploadMatchButton() {
                 opponentName: opponent.name,
                 team1Name: extractedStats.team1Name,
                 team2Name: extractedStats.team2Name,
-                team1Stats: userStats,
-                team2Stats: opponentStats,
+                team1Stats: extractedStats.team1Stats, // Save exactly as extracted
+                team2Stats: extractedStats.team2Stats, // Save exactly as extracted
                 comments: [],
                 matchHash: matchHash,
+                userTeamSide: userTeamSide, // Explicitly save which side the user was on
             };
             
             // Use a batch to write to both collections atomically
