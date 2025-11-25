@@ -81,7 +81,7 @@ export default function LeaderboardPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-24 md:pb-0">
       <PageHeader
         title="Leaderboard"
         description="See who's dominating the barn."
