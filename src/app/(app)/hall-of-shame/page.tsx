@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,6 +10,8 @@ import { collection, query, orderBy, limit } from "firebase/firestore";
 import type { HallEntry, User } from "@/lib/types";
 import { formatDistanceToNow } from 'date-fns';
 import { Timestamp } from "firebase/firestore";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import Image from "next/image";
 
 export default function HallOfFameAndShamePage() {
     const firestore = useFirestore();
@@ -38,7 +40,8 @@ export default function HallOfFameAndShamePage() {
         return null; // Return null or a placeholder if the date is not ready
     }
 
-    // Audio playback for Dilsham's Hall of Fame entry
+    // Dialog and audio playback for Dilsham's Hall of Fame entry
+    const [showDilshamDialog, setShowDilshamDialog] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const hasPlayedRef = useRef(false);
 
@@ -53,6 +56,9 @@ export default function HallOfFameAndShamePage() {
             
             // Check if the user's email matches Dilsham's email
             if (entryUser && entryUser.email === 'dilshamkp007@gmail.com') {
+                // Show the dialog
+                setShowDilshamDialog(true);
+                
                 // Play the special audio
                 if (!audioRef.current) {
                     audioRef.current = new Audio('/dilsham_audio.mp3');
@@ -174,8 +180,22 @@ export default function HallOfFameAndShamePage() {
                             The Hall of Shame is currently empty. Everyone is playing nicely... for now.
                         </CardContent>
                     </Card>
-                )}
-            </div>
+                )}\n            </div>
+            
+            {/* Special Dialog for Dilsham's Hall of Fame */}
+            <Dialog open={showDilshamDialog} onOpenChange={setShowDilshamDialog}>
+                <DialogContent className="max-w-4xl w-full p-0 overflow-hidden bg-transparent border-none">
+                    <div className="relative w-full aspect-video">
+                        <Image 
+                            src="/dilsham_image.png" 
+                            alt="Dilsham Hall of Fame" 
+                            fill
+                            className="object-contain"
+                            priority
+                        />
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
