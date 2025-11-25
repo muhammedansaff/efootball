@@ -317,24 +317,30 @@ export function UploadMatchButton() {
         batch.update(userRef, statsUpdate);
     };
 
+    const [userTeamSide, setUserTeamSide] = useState<'team1' | 'team2' | null>(null);
+
+    // Reset userTeamSide when stats are extracted or dialog is closed
+    useEffect(() => {
+        if (extractedStats) {
+            setUserTeamSide(null);
+        }
+    }, [extractedStats]);
+
     const handleSaveMatch = async () => {
-        if (!extractedStats || !matchResult || !opponentId || !appUser || !firestore || !allBadges) {
-            toast({
-                variant: "destructive",
-                title: "Incomplete Information",
-                description: "Please select an opponent and confirm the result.",
-            });
+        if (!extractedStats || !appUser || !opponentId || !matchResult || !userTeamSide) {
+            toast({ variant: "destructive", title: "Missing Information", description: "Please fill in all fields." });
             return;
         }
-        setIsSaving(true);
-        
-        const opponent = users?.find(u => u.id === opponentId);
+
+        const opponent = opponentOptions.find(u => u.id === opponentId);
         if (!opponent) {
             toast({ variant: "destructive", title: "Opponent not found" });
             setIsSaving(false);
             return;
         }
 
+        setIsSaving(true);
+        
         try {
             // Check for duplicates
             const matchHash = createMatchHash(extractedStats, appUser.id, opponent.id);
@@ -354,7 +360,8 @@ export function UploadMatchButton() {
 
 
             // 1. Prepare Match Data & Generate Roast (optional)
-            const isUserTeam1 = extractedStats.team1Name.toLowerCase().trim() === appUser.name.toLowerCase().trim();
+            // Use manual selection to determine stats
+            const isUserTeam1 = userTeamSide === 'team1';
             const userStats = isUserTeam1 ? extractedStats.team1Stats : extractedStats.team2Stats;
             const opponentStats = isUserTeam1 ? extractedStats.team2Stats : extractedStats.team1Stats;
             const winnerId = matchResult === 'win' ? appUser.id : matchResult === 'loss' ? opponent.id : 'draw';
@@ -567,6 +574,20 @@ export function UploadMatchButton() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                                <div className="space-y-2">
+                                    <Label>Who are you?</Label>
+                                    <RadioGroup value={userTeamSide ?? ''} onValueChange={(val) => setUserTeamSide(val as 'team1' | 'team2')} className="flex flex-col gap-2 pt-2">
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="team1" id="team1" />
+                                            <Label htmlFor="team1" className="font-normal cursor-pointer">{extractedStats.team1Name || 'Team 1'}</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="team2" id="team2" />
+                                            <Label htmlFor="team2" className="font-normal cursor-pointer">{extractedStats.team2Name || 'Team 2'}</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+
                                 <div className="space-y-2">
                                     <Label>Who was your opponent?</Label>
                                     <Select onValueChange={setOpponentId} value={opponentId ?? ''}>
