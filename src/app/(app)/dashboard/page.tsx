@@ -105,8 +105,25 @@ export default function DashboardPage() {
                       </Table>
                     )}
                 </CardContent>
-            </Card>
-        </div>
+</Card>
+<div className="space-y-8">
+  <Card className="h-full">
+    <CardHeader className="flex flex-row items-center justify-between">
+      <CardTitle>Stats Overview</CardTitle>
+      <Link href="/stats" passHref>
+        <Button variant="ghost" size="sm">
+          View All <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </Link>
+    </CardHeader>
+    <CardContent className="p-4">
+      <p className="text-sm text-muted-foreground">
+        Check top performers: best passer, most violent player, best shooter.
+      </p>
+    </CardContent>
+  </Card>
+</div>
+</div>
       </div>
     </div>
   );

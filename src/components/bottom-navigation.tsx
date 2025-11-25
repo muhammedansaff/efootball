@@ -11,6 +11,7 @@ import {
   Trophy,
   Users,
   LogOut,
+  Target,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -52,6 +53,7 @@ const MoreMenu = () => {
     { href: '/badges', icon: Award, label: 'Badges' },
     { href: '/rivals', icon: Swords, label: 'Rivals' },
     { href: '/journey', icon: GitCommitHorizontal, label: 'Journey' },
+    { href: '/stats', icon: Target, label: 'Stats' },
   ];
   return (
     <Popover>
