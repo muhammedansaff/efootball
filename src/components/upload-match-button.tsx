@@ -196,13 +196,23 @@ export function UploadMatchButton() {
         try {
             const batch = writeBatch(firestore);
 
-            // Generate Hall of Fame/Shame roasts
-            const { fameRoast, shameRoast } = await generateHallOfShameRoast({
-                category: "General",
-                stat: `Score: ${winner.name} ${matchResult === 'win' ? userStats.score : opponentStats.score} - ${loser.name} ${matchResult === 'win' ? opponentStats.score : userStats.score}`,
-                username: winner.name,
-                opponentName: loser.name
-            });
+            // Try to generate Hall of Fame/Shame roasts, but use fallback if it fails
+            let fameRoast = `${winner.name} dominated with an impressive victory!`;
+            let shameRoast = `${loser.name} faced a tough defeat this time.`;
+            
+            try {
+                const roastResult = await generateHallOfShameRoast({
+                    category: "General",
+                    stat: `Score: ${winner.name} ${matchResult === 'win' ? userStats.score : opponentStats.score} - ${loser.name} ${matchResult === 'win' ? opponentStats.score : userStats.score}`,
+                    username: winner.name,
+                    opponentName: loser.name
+                });
+                fameRoast = roastResult.fameRoast;
+                shameRoast = roastResult.shameRoast;
+            } catch (roastError: any) {
+                console.warn('Failed to generate Hall of Fame/Shame roasts, using fallback:', roastError?.message);
+                // Continue with fallback roasts
+            }
             
             const goalDifference = Math.abs(userStats.score - opponentStats.score);
 
@@ -234,6 +244,8 @@ export function UploadMatchButton() {
             batch.set(doc(collection(firestore, 'hallofshame')), shameEntry);
 
             await batch.commit();
+            
+            console.log('✅ Hall of Fame/Shame entries created successfully');
 
             // Badge Checking
             const checkAndToastBadges = async (userId: string, isCurrentUser: boolean) => {
@@ -341,25 +353,33 @@ export function UploadMatchButton() {
             }
 
 
-            // 1. Prepare Match Data & Generate Roast
+            // 1. Prepare Match Data & Generate Roast (optional)
             const isUserTeam1 = extractedStats.team1Name.toLowerCase().trim() === appUser.name.toLowerCase().trim();
             const userStats = isUserTeam1 ? extractedStats.team1Stats : extractedStats.team2Stats;
             const opponentStats = isUserTeam1 ? extractedStats.team2Stats : extractedStats.team1Stats;
             const winnerId = matchResult === 'win' ? appUser.id : matchResult === 'loss' ? opponent.id : 'draw';
             
-            const roastResult = await generateMatchRoast({
-                winningScore: matchResult === 'win' ? userStats.score : opponentStats.score,
-                losingScore: matchResult === 'win' ? opponentStats.score : userStats.score,
-                winnerName: matchResult === 'win' ? appUser.name : opponent.name,
-                loserName: matchResult === 'win' ? opponent.name : appUser.name,
-            });
+            // Try to generate roast, but don't fail if it doesn't work
+            let roastText = '';
+            try {
+                const roastResult = await generateMatchRoast({
+                    winningScore: matchResult === 'win' ? userStats.score : opponentStats.score,
+                    losingScore: matchResult === 'win' ? opponentStats.score : userStats.score,
+                    winnerName: matchResult === 'win' ? appUser.name : opponent.name,
+                    loserName: matchResult === 'win' ? opponent.name : appUser.name,
+                });
+                roastText = roastResult.roast;
+            } catch (roastError: any) {
+                console.warn('Failed to generate roast, continuing without it:', roastError?.message);
+                // Continue without roast - it's optional
+            }
 
             const matchData: Omit<Match, 'id'> = {
                 userId: appUser.id,
                 opponentId: opponent.id,
                 participants: [appUser.id, opponent.id],
                 date: serverTimestamp(),
-                roast: roastResult.roast,
+                roast: roastText,
                 winnerId: winnerId,
                 opponentName: opponent.name,
                 team1Name: extractedStats.team1Name,
