@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Card, CardContent } from "./ui/card";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from 'date-fns';
-import { Trophy, Skull, Shield, MessageSquareQuote, ChevronsRight } from "lucide-react";
+import { Trophy, Skull, Shield, MessageSquareQuote, ChevronsRight, Crown } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 
@@ -80,6 +80,10 @@ export function MatchCard({ match, currentUser, showRoast = false }: MatchCardPr
         }
     }
 
+    const score1 = match.team1Stats.score;
+    const score2 = match.team2Stats.score;
+    const winner = score1 > score2 ? 'team1' : score2 > score1 ? 'team2' : 'draw';
+
     return (
         <Card className={cn("transition-all hover:shadow-lg hover:shadow-primary/10")}>
             <CardContent className="p-4">
@@ -88,18 +92,25 @@ export function MatchCard({ match, currentUser, showRoast = false }: MatchCardPr
                         {/* Team 1 (Left) */}
                         <div className="flex items-center gap-3 justify-end">
                             <span className="font-semibold text-right truncate">{match.team1Name}</span>
-                            <Avatar>
-                                <AvatarImage src={team1AvatarUrl} alt={match.team1Name} />
-                                <AvatarFallback>{match.team1Name.charAt(0)}</AvatarFallback>
-                            </Avatar>
+                            <div className="relative">
+                                <Avatar>
+                                    <AvatarImage src={team1AvatarUrl} alt={match.team1Name} />
+                                    <AvatarFallback>{match.team1Name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                {winner === 'team1' && (
+                                    <div className="absolute -top-3 -right-1 bg-background rounded-full p-0.5 shadow-sm border border-border/50">
+                                        <Crown className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Score */}
                         <div className="text-center">
-                            <div className="flex items-center gap-2">
-                                <span className="font-headline text-4xl">{match.team1Stats.score}</span>
+                            <div className="flex items-center gap-2 justify-center">
+                                <span className={cn("font-headline text-4xl", winner === 'team1' ? "text-yellow-500" : winner === 'team2' ? "text-red-500" : "")}>{score1}</span>
                                 <span className="font-headline text-2xl text-muted-foreground">-</span>
-                                <span className="font-headline text-4xl">{match.team2Stats.score}</span>
+                                <span className={cn("font-headline text-4xl", winner === 'team2' ? "text-yellow-500" : winner === 'team1' ? "text-red-500" : "")}>{score2}</span>
                             </div>
                             <div className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-2">
                                 <OutcomeIcon outcome={outcome} />
@@ -109,10 +120,17 @@ export function MatchCard({ match, currentUser, showRoast = false }: MatchCardPr
 
                         {/* Team 2 (Right) */}
                         <div className="flex items-center gap-3 justify-start">
-                             <Avatar>
-                                <AvatarImage src={team2AvatarUrl} alt={match.team2Name} />
-                                <AvatarFallback>{match.team2Name.charAt(0)}</AvatarFallback>
-                            </Avatar>
+                             <div className="relative">
+                                <Avatar>
+                                    <AvatarImage src={team2AvatarUrl} alt={match.team2Name} />
+                                    <AvatarFallback>{match.team2Name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                {winner === 'team2' && (
+                                    <div className="absolute -top-3 -left-1 bg-background rounded-full p-0.5 shadow-sm border border-border/50">
+                                        <Crown className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                                    </div>
+                                )}
+                            </div>
                             <span className="font-semibold text-left truncate">{match.team2Name}</span>
                         </div>
                     </div>
