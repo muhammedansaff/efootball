@@ -81,7 +81,7 @@ export function MatchCard({ match, currentUser, showRoast = false }: MatchCardPr
     }
 
     return (
-        <Card className={cn("transition-all hover:shadow-lg hover:shadow-primary/10", outcomeBgClass)}>
+        <Card className={cn("transition-all hover:shadow-lg hover:shadow-primary/10")}>
             <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                     <div className="grid flex-grow grid-cols-[1fr_auto_1fr] items-center gap-4">
