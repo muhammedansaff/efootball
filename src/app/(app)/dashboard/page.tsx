@@ -26,8 +26,8 @@ export default function DashboardPage() {
   const { data: leaderboard, isLoading: isLoadingLeaderboard } = useCollection<User>(allUsersQuery);
 
   const recentMatchesQuery = useMemoFirebase(() => 
-    (appUser && firestore) ? query(collection(firestore, 'matches'), where('participants', 'array-contains', appUser.id), orderBy('date', 'desc'), limit(4)) : null,
-    [firestore, appUser]
+    firestore ? query(collection(firestore, 'matches'), orderBy('date', 'desc'), limit(4)) : null,
+    [firestore]
   );
   const { data: recentMatches, isLoading: isLoadingMatches } = useCollection<Match>(recentMatchesQuery);
 

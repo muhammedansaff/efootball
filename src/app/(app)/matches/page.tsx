@@ -15,8 +15,8 @@ export default function MatchesPage() {
     const firestore = useFirestore();
 
     const matchesQuery = useMemoFirebase(() => 
-        (appUser && firestore) ? query(collection(firestore, 'matches'), where('participants', 'array-contains', appUser.id), orderBy('date', 'desc')) : null,
-        [firestore, appUser]
+        firestore ? query(collection(firestore, 'matches'), orderBy('date', 'desc')) : null,
+        [firestore]
     );
     const { data: matches, isLoading } = useCollection<Match>(matchesQuery);
 
@@ -25,8 +25,8 @@ export default function MatchesPage() {
     return (
         <div className="space-y-8">
             <PageHeader
-                title="Your Matches"
-                description="A history of your glorious victories and 'unlucky' defeats."
+                title="All Matches"
+                description="Every match from the Banter Barn community."
             >
                 <UploadMatchButton />
             </PageHeader>
@@ -43,7 +43,7 @@ export default function MatchesPage() {
                 {!isLoading && matches?.length === 0 && (
                     <Card>
                         <CardContent className="p-8 text-center text-muted-foreground">
-                            You haven't uploaded any matches yet.
+                            No matches have been uploaded yet. Be the first!
                         </CardContent>
                     </Card>
                 )}
