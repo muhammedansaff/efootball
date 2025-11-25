@@ -63,7 +63,7 @@ export function DilshamVictorySticker() {
     if (!showSticker) return null;
 
     return (
-        <div className="fixed bottom-4 right-4 z-50 animate-slide-in-bottom-right">
+        <div className="fixed bottom-24 md:bottom-8 right-4 z-50 animate-slide-in-bottom-right">
             <div className="relative w-32 h-32 md:w-40 md:h-40 drop-shadow-2xl">
                 <Image
                     src="/dilsham_sticker.png"
