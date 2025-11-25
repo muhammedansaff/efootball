@@ -157,12 +157,25 @@ export function UploadMatchButton() {
                 setMatchResult('draw');
             }
 
-        } catch (error) {
-            console.error(error);
+        } catch (error: any) {
+            console.error('=== MATCH STATS EXTRACTION ERROR ===' );
+            console.error('Error Type:', error?.constructor?.name);
+            console.error('Error Message:', error?.message);
+            console.error('Error Stack:', error?.stack);
+            console.error('Error Details:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+            console.error('Preview Image Length:', preview?.length);
+            console.error('User Info:', { userId: appUser?.id, userName: appUser?.name });
+            console.error('=====================================');
+            
+            const errorMessage = error?.message || 'Unknown error occurred';
+            const isApiKeyError = errorMessage.includes('API key') || errorMessage.includes('GEMINI_API_KEY') || errorMessage.includes('GOOGLE_API_KEY');
+            
             toast({
                 variant: "destructive",
                 title: "Extraction Failed",
-                description: "Could not extract stats from the image. Please try another one or check the image format.",
+                description: isApiKeyError 
+                    ? "API key is missing or invalid. Please check your environment configuration."
+                    : `Could not extract stats: ${errorMessage}. Please try another image.`,
             });
             handleReset();
         } finally {
@@ -254,9 +267,20 @@ export function UploadMatchButton() {
             await checkAndToastBadges(appUser!.id, true);
             await checkAndToastBadges(opponent.id, false);
 
-        } catch (error) {
-            console.error("Error in background task:", error);
-            // Optionally notify user of background task failure
+        } catch (error: any) {
+            console.error('=== BACKGROUND TASK ERROR ===' );
+            console.error('Error Type:', error?.constructor?.name);
+            console.error('Error Message:', error?.message);
+            console.error('Error Stack:', error?.stack);
+            console.error('Error Details:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+            console.error('Context:', {
+                matchId: matchRef.id,
+                winnerId: winner.id,
+                loserId: loser.id,
+                matchResult: matchResult,
+            });
+            console.error('=====================================');
+            // Background task failures are non-critical, so we just log them
         }
     };
 
@@ -386,11 +410,37 @@ export function UploadMatchButton() {
             updateAndBackgroundTasks();
 
         } catch(error: any) {
-             console.error("Failed to save match:", error);
-             toast({
+            console.error('=== MATCH SAVE ERROR ===' );
+            console.error('Error Type:', error?.constructor?.name);
+            console.error('Error Message:', error?.message);
+            console.error('Error Code:', error?.code);
+            console.error('Error Stack:', error?.stack);
+            console.error('Error Details:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+            console.error('Context:', {
+                userId: appUser?.id,
+                opponentId: opponentId,
+                matchResult: matchResult,
+                hasExtractedStats: !!extractedStats,
+                hasFirestore: !!firestore,
+                hasBadges: !!allBadges,
+            });
+            console.error('=====================================');
+            
+            const errorMessage = error?.message || 'An unexpected error occurred';
+            const isApiKeyError = errorMessage.includes('API key') || errorMessage.includes('GEMINI_API_KEY') || errorMessage.includes('GOOGLE_API_KEY');
+            const isFirestoreError = error?.code?.startsWith('firestore/');
+            
+            let userFriendlyMessage = errorMessage;
+            if (isApiKeyError) {
+                userFriendlyMessage = 'API key is missing or invalid. Please contact support.';
+            } else if (isFirestoreError) {
+                userFriendlyMessage = `Database error: ${errorMessage}`;
+            }
+            
+            toast({
                 variant: "destructive",
                 title: "Failed to Save Match",
-                description: error.message || "An unexpected error occurred.",
+                description: userFriendlyMessage,
             });
             setIsSaving(false); // only set to false on error
         }
