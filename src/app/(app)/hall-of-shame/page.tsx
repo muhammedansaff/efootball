@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from "react";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -36,6 +37,36 @@ export default function HallOfFameAndShamePage() {
         }
         return null; // Return null or a placeholder if the date is not ready
     }
+
+    // Audio playback for Dilsham's Hall of Fame entry
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+    const hasPlayedRef = useRef(false);
+
+    useEffect(() => {
+        // Only run when data is loaded and audio hasn't been played yet
+        if (!isLoading && fameEntries.length > 0 && users && !hasPlayedRef.current) {
+            // Get the latest (first) Hall of Fame entry
+            const latestFameEntry = fameEntries[0];
+            
+            // Get the user for this entry
+            const entryUser = getUser(latestFameEntry.userId);
+            
+            // Check if the user's email matches Dilsham's email
+            if (entryUser && entryUser.email === 'dilshamkp007@gmail.com') {
+                // Play the special audio
+                if (!audioRef.current) {
+                    audioRef.current = new Audio('/dilsham_audio.mp3');
+                }
+                
+                audioRef.current.play().catch(error => {
+                    console.log('Audio playback failed:', error);
+                    // Audio playback might fail due to browser autoplay policies
+                });
+                
+                hasPlayedRef.current = true;
+            }
+        }
+    }, [isLoading, fameEntries, users]);
 
     if (isLoading) {
         return (
