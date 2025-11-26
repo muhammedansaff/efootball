@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Upload, FileImage, Loader2, Plus, Crown, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { extractMatchStatsFromImage, ExtractMatchStatsFromImageOutput, PlayerStats } from "@/ai/flows/extract-match-stats-from-image";
+import { ExtractMatchStatsFromImageOutput, PlayerStats } from "@/ai/flows/extract-match-stats-from-image";
 import { useAuth } from "@/providers/auth-provider";
 import { Card, CardContent } from "./ui/card";
 import { Label } from "./ui/label";
@@ -144,7 +144,21 @@ export function UploadMatchButton() {
         if (!preview) return;
         setIsProcessing(true);
         try {
-            const stats = await extractMatchStatsFromImage({ matchStatsImage: preview });
+            // Call API route instead of Server Action directly
+            const response = await fetch('/api/extract-match-stats', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ matchStatsImage: preview }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to extract stats');
+            }
+
+            const stats = await response.json();
             setExtractedStats(stats);
             
             if (stats.team1Stats.score > stats.team2Stats.score) {
@@ -390,11 +404,11 @@ export function UploadMatchButton() {
                 // Continue without roast - it's optional
             }
 
-            const matchData: Omit<Match, 'id'> = {
+            const matchData = {
                 createdBy: appUser.id,
                 opponentId: opponent.id,
                 participants: [appUser.id, opponent.id],
-                date: serverTimestamp(),
+                date: serverTimestamp() as any,
                 roast: roastText,
                 winnerId: winnerId,
                 opponentName: opponent.name,
