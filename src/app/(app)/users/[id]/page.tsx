@@ -94,11 +94,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
     }
     
     console.log('✅ [UserProfilePage] User found:', user.name);
-    
-    // Get local avatar if available
-    const localAvatar = typeof window !== 'undefined' ? localStorage.getItem(`avatar-${user.id}`) : null;
-    const avatarUrl = localAvatar || user.avatarUrl;
-    console.log('🖼️ [UserProfilePage] Avatar URL:', avatarUrl ? 'set' : 'not set');
+    console.log('🖼️ [UserProfilePage] Avatar URL:', user.avatarUrl ? 'set' : 'not set');
 
     const { stats, badges: earnedBadgeIds } = user;
     const earnedBadges = allBadges?.filter(badge => earnedBadgeIds?.includes(badge.id)) || [];
@@ -118,7 +114,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
             <Card>
                 <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6">
                     <Avatar className="h-28 w-28 border-4 border-primary">
-                        <AvatarImage src={avatarUrl} alt={user.name} />
+                        <AvatarImage src={user.avatarUrl} alt={user.name} />
                         <AvatarFallback className="text-4xl">{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex-grow">

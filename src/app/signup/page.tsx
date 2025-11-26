@@ -81,17 +81,31 @@ export default function SignUpPage() {
 
   const handleSignUp = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
-    await signUp({
-      email: values.email,
-      password_DO_NOT_STORE: values.password,
-      name: values.name,
-      realName: values.realName,
-      pesTeamName: values.pesTeamName,
-      avatarUrl: values.avatar || '',
-    });
-    // Loading state will be handled by the AuthProvider, which will navigate on success
-    // If there's an error, loading will be set to false in the provider
-    setIsLoading(false);
+    
+    try {
+      let avatarUrl = '';
+      
+      // Upload avatar to ImgBB if provided
+      if (values.avatar) {
+        const { uploadAvatar } = await import('@/lib/upload-avatar');
+        avatarUrl = await uploadAvatar(values.avatar);
+      }
+      
+      await signUp({
+        email: values.email,
+        password_DO_NOT_STORE: values.password,
+        name: values.name,
+        realName: values.realName,
+        pesTeamName: values.pesTeamName,
+        avatarUrl: avatarUrl,
+      });
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      // Error handling is done in the AuthProvider
+    } finally {
+      // Loading state will be handled by the AuthProvider
+      setIsLoading(false);
+    }
   };
 
   return (

@@ -219,11 +219,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const fbUser = userCredential.user;
 
       await updateProfile(fbUser, { displayName: data.name });
-      
-      // Store avatar in local storage
-      if (data.avatarUrl) {
-          localStorage.setItem(`avatar-${fbUser.uid}`, data.avatarUrl);
-      }
 
       const newUser: Omit<User, 'id'> = {
         name: data.name,
@@ -254,12 +249,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     try {
       await firebaseSignOut(auth);
-      // Clear all local avatars on sign out
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('avatar-')) {
-          localStorage.removeItem(key);
-        }
-      });
       router.push('/login');
     } catch (error) {
       console.error('Sign-out error:', error);

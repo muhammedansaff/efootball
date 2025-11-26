@@ -68,6 +68,10 @@ export type Comment = {
   id: string;
   user: User;
   text: string;
+  voiceNote?: {
+    data: string; // base64 audio data
+    duration: number; // duration in seconds
+  };
   timestamp: string;
 };
 
@@ -104,6 +108,8 @@ export type HallEntry = {
     stat: string; // e.g., 'Won by 5 goals'
     roast: string;
     date: Timestamp;
+    winnerId?: string; // Optional for backward compatibility
+    loserId?: string; // Optional for backward compatibility
 };
 
 

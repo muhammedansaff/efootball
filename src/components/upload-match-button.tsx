@@ -240,6 +240,8 @@ export function UploadMatchButton() {
                 stat: `Won by ${goalDifference} goals`,
                 roast: fameRoast,
                 date: serverTimestamp() as any,
+                winnerId: winner.id,
+                loserId: loser.id,
             };
 
             const shameEntry: Omit<HallEntry, 'id'> = {
@@ -252,6 +254,8 @@ export function UploadMatchButton() {
                 stat: `Lost by ${goalDifference} goals`,
                 roast: shameRoast,
                 date: serverTimestamp() as any,
+                winnerId: winner.id,
+                loserId: loser.id,
             };
 
             batch.set(doc(collection(firestore, 'hallofshame')), fameEntry);

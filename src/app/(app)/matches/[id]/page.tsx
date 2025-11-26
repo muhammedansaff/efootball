@@ -69,8 +69,9 @@ export default function MatchDetailsPage() {
         notFound();
     }
     
-    const team1Id = match.participants.find(p => p !== match.opponentId)!;
-    const team2Id = match.opponentId;
+    // Use the userIds stored in the stats to identify the users
+    const team1Id = match.team1Stats.userId || match.participants.find(p => p !== match.opponentId)!;
+    const team2Id = match.team2Stats.userId || match.opponentId;
 
     const team1User = users?.find(u => u.id === team1Id);
     const team2User = users?.find(u => u.id === team2Id);

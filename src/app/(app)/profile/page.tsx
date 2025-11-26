@@ -6,13 +6,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { allBadges as staticBadges } from "@/lib/data";
 import { StatCard } from "@/components/stat-card";
-import { Trophy, Shield, Goal, Ratio, Percent, AlertTriangle, Disc3, Footprints, Target, GitCommitHorizontal, Spade, Hand, User as UserIcon, ShieldQuestion } from "lucide-react";
+import { Trophy, Shield, Goal, Ratio, Percent, AlertTriangle, Disc3, Footprints, Target, GitCommitHorizontal, Spade, Hand, User as UserIcon, ShieldQuestion, Pencil } from "lucide-react";
 import { MatchCard } from "@/components/match-card";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, where } from "firebase/firestore";
 import type { Match, Badge } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { EditProfileDialog } from "@/components/edit-profile-dialog";
+import { useState } from "react";
 
 
 const getIcon = (iconName: string) => {
@@ -24,6 +27,7 @@ const getIcon = (iconName: string) => {
 export default function ProfilePage() {
     const { appUser } = useAuth();
     const firestore = useFirestore();
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
     const matchesQuery = useMemoFirebase(() =>
         (appUser && firestore) ? query(collection(firestore, 'matches'), where('participants', 'array-contains', appUser.id), orderBy('date', 'desc')) : null,
@@ -49,10 +53,20 @@ export default function ProfilePage() {
         <div className="space-y-8">
             <Card>
                 <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6">
-                    <Avatar className="h-28 w-28 border-4 border-primary">
-                        <AvatarImage src={appUser.avatarUrl} alt={appUser.name} />
-                        <AvatarFallback className="text-4xl">{appUser.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
+                    <div className="relative">
+                        <Avatar className="h-28 w-28 border-4 border-primary">
+                            <AvatarImage src={appUser.avatarUrl} alt={appUser.name} />
+                            <AvatarFallback className="text-4xl">{appUser.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <Button
+                            size="icon"
+                            variant="secondary"
+                            className="absolute -bottom-2 -right-2 h-10 w-10 rounded-full shadow-lg"
+                            onClick={() => setIsEditDialogOpen(true)}
+                        >
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                    </div>
                     <div className="flex-grow">
                         <h1 className="font-headline text-5xl">{appUser.name}</h1>
                         <p className="text-muted-foreground">{appUser.email}</p>
@@ -73,6 +87,15 @@ export default function ProfilePage() {
                     </div>
                 </CardContent>
             </Card>
+            
+            {/* Edit Profile Dialog */}
+            {appUser && (
+                <EditProfileDialog
+                    user={appUser}
+                    open={isEditDialogOpen}
+                    onOpenChange={setIsEditDialogOpen}
+                />
+            )}
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard icon={<Trophy />} title="Wins" value={stats.wins} />

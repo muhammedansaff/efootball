@@ -4,18 +4,24 @@ import { useEffect, useRef, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, ThumbsDown, Crown } from "lucide-react";
+import { Loader2, ThumbsDown, Crown, Pencil } from "lucide-react";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, limit } from "firebase/firestore";
+import { collection, query, orderBy, limit, doc, updateDoc } from "firebase/firestore";
 import type { HallEntry, User } from "@/lib/types";
 import { formatDistanceToNow } from 'date-fns';
 import { Timestamp } from "firebase/firestore";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { EditRoastDialog } from "@/components/edit-roast-dialog";
+import { useAuth } from "@/providers/auth-provider";
+import { useToast } from "@/hooks/use-toast";
 
 export default function HallOfFameAndShamePage() {
     const firestore = useFirestore();
+    const { appUser } = useAuth();
+    const { toast } = useToast();
     
     const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
     const { data: users, isLoading: isLoadingUsers } = useCollection<User>(usersQuery);
@@ -40,6 +46,41 @@ export default function HallOfFameAndShamePage() {
         }
         return null; // Return null or a placeholder if the date is not ready
     }
+
+    // Edit functionality
+    const [editingEntry, setEditingEntry] = useState<HallEntry | null>(null);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+    const handleEditClick = (entry: HallEntry) => {
+        setEditingEntry(entry);
+        setIsEditDialogOpen(true);
+    };
+
+    const handleSaveRoast = async (newRoast: string) => {
+        if (!editingEntry || !firestore) return;
+
+        try {
+            const entryRef = doc(firestore, 'hallofshame', editingEntry.id);
+            await updateDoc(entryRef, { roast: newRoast });
+            
+            toast({
+                title: "Roast Updated!",
+                description: "Your roast has been successfully updated.",
+            });
+        } catch (error) {
+            console.error("Error updating roast:", error);
+            toast({
+                variant: "destructive",
+                title: "Update Failed",
+                description: "Could not update the roast. Please try again.",
+            });
+        }
+    };
+
+    // Check if current user can edit an entry (must be the winner)
+    const canEdit = (entry: HallEntry) => {
+        return appUser && entry.winnerId && entry.winnerId === appUser.id;
+    };
 
     // Dialog and audio playback for Dilsham's Hall of Fame entry
     const [showDilshamDialog, setShowDilshamDialog] = useState(false);
@@ -112,7 +153,19 @@ export default function HallOfFameAndShamePage() {
                                                 <CardTitle className="font-headline text-2xl text-primary">{entry.title}</CardTitle>
                                                 <CardDescription>{entry.description}</CardDescription>
                                             </div>
-                                            <Crown className="h-8 w-8 text-primary/70 flex-shrink-0"/>
+                                            <div className="flex items-center gap-2">
+                                                {canEdit(entry) && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleEditClick(entry)}
+                                                        className="h-8 w-8"
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                                <Crown className="h-8 w-8 text-primary/70 flex-shrink-0"/>
+                                            </div>
                                         </div>
                                     </CardHeader>
                                     <CardContent className="flex-grow flex flex-col items-center justify-center text-center p-6 bg-card rounded-b-lg">
@@ -156,7 +209,19 @@ export default function HallOfFameAndShamePage() {
                                                 <CardTitle className="font-headline text-2xl text-destructive">{entry.title}</CardTitle>
                                                 <CardDescription>{entry.description}</CardDescription>
                                             </div>
-                                            <ThumbsDown className="h-8 w-8 text-destructive/70 flex-shrink-0"/>
+                                            <div className="flex items-center gap-2">
+                                                {canEdit(entry) && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleEditClick(entry)}
+                                                        className="h-8 w-8"
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                                <ThumbsDown className="h-8 w-8 text-destructive/70 flex-shrink-0"/>
+                                            </div>
                                         </div>
                                     </CardHeader>
                                     <CardContent className="flex-grow flex flex-col items-center justify-center text-center p-6 bg-card rounded-b-lg">
@@ -182,6 +247,18 @@ export default function HallOfFameAndShamePage() {
                         </CardContent>
                     </Card>
                 )}\n            </div>
+            
+            {/* Edit Roast Dialog */}
+            {editingEntry && (
+                <EditRoastDialog
+                    open={isEditDialogOpen}
+                    onOpenChange={setIsEditDialogOpen}
+                    initialRoast={editingEntry.roast}
+                    onSave={handleSaveRoast}
+                    title={`Edit ${editingEntry.type === 'fame' ? 'Hall of Fame' : 'Hall of Shame'} Roast`}
+                    description="Update the roast message below."
+                />
+            )}
             
             {/* Special Dialog for Dilsham's Hall of Fame */}
             <Dialog open={showDilshamDialog} onOpenChange={setShowDilshamDialog}>
