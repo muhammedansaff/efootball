@@ -42,7 +42,10 @@ export type User = {
     successfulPasses: number;
     tackles: number;
     saves: number;
+    fouls: number;
     redCards: number;
+    totalPossession: number;
+    matchesPlayed: number;
   };
 };
 

@@ -49,6 +49,9 @@ export default function StatsPage() {
 
   // Helper to safely compute percentages
   const safePercent = (num?: number, den?: number) => (den && den > 0 ? Math.round((num! / den) * 100) : 0);
+  
+  // Helper to calculate average possession
+  const avgPossession = (total?: number, matches?: number) => (matches && matches > 0 ? Math.round(total! / matches) : 0);
 
   // Determine top performers for each metric
   const top = {
@@ -56,7 +59,7 @@ export default function StatsPage() {
     mostLosses: users.reduce((a, b) => (b.stats?.losses ?? 0) > (a.stats?.losses ?? 0) ? b : a),
     mostDraws: users.reduce((a, b) => (b.stats?.draws ?? 0) > (a.stats?.draws ?? 0) ? b : a),
     bestPasser: users.reduce((a, b) => (b.stats?.successfulPasses ?? 0) > (a.stats?.successfulPasses ?? 0) ? b : a),
-    mostViolent: users.reduce((a, b) => (b.stats?.redCards ?? 0) > (a.stats?.redCards ?? 0) ? b : a),
+    mostViolent: users.reduce((a, b) => (b.stats?.fouls ?? 0) > (a.stats?.fouls ?? 0) ? b : a),
     bestShooter: users.reduce((a, b) => (b.stats?.shotsOnTarget ?? 0) > (a.stats?.shotsOnTarget ?? 0) ? b : a),
     mostGoalsFor: users.reduce((a, b) => (b.stats?.goalsFor ?? 0) > (a.stats?.goalsFor ?? 0) ? b : a),
     mostGoalsAgainst: users.reduce((a, b) => (b.stats?.goalsAgainst ?? 0) > (a.stats?.goalsAgainst ?? 0) ? b : a),
@@ -72,6 +75,11 @@ export default function StatsPage() {
     }),
     mostTackles: users.reduce((a, b) => (b.stats?.tackles ?? 0) > (a.stats?.tackles ?? 0) ? b : a),
     mostSaves: users.reduce((a, b) => (b.stats?.saves ?? 0) > (a.stats?.saves ?? 0) ? b : a),
+    bestPossession: users.reduce((a, b) => {
+      const aAvg = avgPossession(a.stats?.totalPossession, a.stats?.matchesPlayed);
+      const bAvg = avgPossession(b.stats?.totalPossession, b.stats?.matchesPlayed);
+      return bAvg > aAvg ? b : a;
+    }),
   };
 
   const statCards = [
@@ -79,7 +87,7 @@ export default function StatsPage() {
     { title: 'Most Losses', user: top.mostLosses, value: top.mostLosses.stats?.losses, icon: <Shield className="h-5 w-5 text-destructive" /> },
     { title: 'Most Draws', user: top.mostDraws, value: top.mostDraws.stats?.draws, icon: <Ratio className="h-5 w-5 text-primary" /> },
     { title: 'Best Passer', user: top.bestPasser, value: top.bestPasser.stats?.successfulPasses, icon: <Disc3 className="h-5 w-5 text-primary" /> },
-    { title: 'Most Violent', user: top.mostViolent, value: top.mostViolent.stats?.redCards, icon: <AlertTriangle className="h-5 w-5 text-destructive" /> },
+    { title: 'Most Violent', user: top.mostViolent, value: top.mostViolent.stats?.fouls, icon: <AlertTriangle className="h-5 w-5 text-destructive" /> },
     { title: 'Best Shooter', user: top.bestShooter, value: top.bestShooter.stats?.shotsOnTarget, icon: <Goal className="h-5 w-5 text-primary" /> },
     { title: 'Most Goals For', user: top.mostGoalsFor, value: top.mostGoalsFor.stats?.goalsFor, icon: <Goal className="h-5 w-5 text-primary" /> },
     { title: 'Most Goals Against', user: top.mostGoalsAgainst, value: top.mostGoalsAgainst.stats?.goalsAgainst, icon: <Shield className="h-5 w-5 text-muted-foreground" /> },
@@ -87,6 +95,7 @@ export default function StatsPage() {
     { title: 'Best Shot Accuracy', user: top.bestShotAccuracy, value: `${safePercent(top.bestShotAccuracy.stats?.shotsOnTarget, top.bestShotAccuracy.stats?.shots)}%`, icon: <Ratio className="h-5 w-5 text-primary" /> },
     { title: 'Most Tackles', user: top.mostTackles, value: top.mostTackles.stats?.tackles, icon: <Footprints className="h-5 w-5 text-primary" /> },
     { title: 'Most Saves', user: top.mostSaves, value: top.mostSaves.stats?.saves, icon: <Hand className="h-5 w-5 text-primary" /> },
+    { title: 'Best Avg Possession', user: top.bestPossession, value: `${avgPossession(top.bestPossession.stats?.totalPossession, top.bestPossession.stats?.matchesPlayed)}%`, icon: <Percent className="h-5 w-5 text-primary" /> },
   ];
 
   return (

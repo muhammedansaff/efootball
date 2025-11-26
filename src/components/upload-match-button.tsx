@@ -318,6 +318,9 @@ export function UploadMatchButton() {
     const updateUserStatsAndBadges = async (batch: any, userId: string, userStats: PlayerStats, opponentStats: PlayerStats, result: 'win' | 'loss' | 'draw') => {
         const userRef = doc(firestore!, 'users', userId);
         
+        // Parse possession percentage (e.g., "45%" -> 45)
+        const possessionValue = parseFloat(userStats.possession.replace('%', '')) || 0;
+        
         const statsUpdate = {
             'stats.wins': increment(result === 'win' ? 1 : 0),
             'stats.losses': increment(result === 'loss' ? 1 : 0),
@@ -330,7 +333,10 @@ export function UploadMatchButton() {
             'stats.successfulPasses': increment(userStats.successfulPasses),
             'stats.tackles': increment(userStats.tackles),
             'stats.saves': increment(userStats.saves),
+            'stats.fouls': increment(userStats.fouls || 0),
             'stats.redCards': increment(userStats.redCards || 0),
+            'stats.totalPossession': increment(possessionValue),
+            'stats.matchesPlayed': increment(1),
         };
         batch.update(userRef, statsUpdate);
     };
