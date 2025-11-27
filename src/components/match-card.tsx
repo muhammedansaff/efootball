@@ -95,8 +95,8 @@ export function MatchCard({ match, currentUser, showRoast = false }: MatchCardPr
                 id: crypto.randomUUID(),
                 user: currentUser,
                 text: newComment.trim() || '🎤 Voice note',
-                voiceNote: voiceRecording || undefined,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                ...(voiceRecording && { voiceNote: voiceRecording })
             };
 
             const matchRef = doc(firestore, 'matches', match.id);
