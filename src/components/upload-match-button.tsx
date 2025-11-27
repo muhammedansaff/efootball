@@ -13,12 +13,11 @@ import { Label } from "./ui/label";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, getDoc, writeBatch, query, arrayUnion, DocumentReference, where, getDocs } from "firebase/firestore";
-import { generateMatchRoast } from "@/ai/flows/generate-match-roast";
 import type { User, Match, Badge, HallEntry } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { manageBadges } from "@/providers/auth-provider";
-import { generateHallOfShameRoast } from "@/ai/flows/generate-hall-of-shame-roast";
+import { getRandomMatchRoast, getRandomHallOfFameMessage, getRandomHallOfShameMessage } from "@/lib/random-messages";
 
 const checkAndAwardBadges = async (
     firestore: any,
@@ -210,23 +209,9 @@ export function UploadMatchButton() {
         try {
             const batch = writeBatch(firestore);
 
-            // Try to generate Hall of Fame/Shame roasts, but use fallback if it fails
-            let fameRoast = `${winner.name} dominated with an impressive victory!`;
-            let shameRoast = `${loser.name} faced a tough defeat this time.`;
-            
-            try {
-                const roastResult = await generateHallOfShameRoast({
-                    category: "General",
-                    stat: `Score: ${winner.name} ${matchResult === 'win' ? userStats.score : opponentStats.score} - ${loser.name} ${matchResult === 'win' ? opponentStats.score : userStats.score}`,
-                    username: winner.name,
-                    opponentName: loser.name
-                });
-                fameRoast = roastResult.fameRoast;
-                shameRoast = roastResult.shameRoast;
-            } catch (roastError: any) {
-                console.warn('Failed to generate Hall of Fame/Shame roasts, using fallback:', roastError?.message);
-                // Continue with fallback roasts
-            }
+            // Get random pre-defined roasts
+            const fameRoast = getRandomHallOfFameMessage();
+            const shameRoast = getRandomHallOfShameMessage();
             
             const goalDifference = Math.abs(userStats.score - opponentStats.score);
 
@@ -383,7 +368,7 @@ export function UploadMatchButton() {
             }
 
 
-            // 1. Prepare Match Data & Generate Roast (optional)
+            // 1. Prepare Match Data & Get Random Roast
             // Use manual selection to determine stats
             const isUserTeam1 = userTeamSide === 'team1';
             const userStats = isUserTeam1 ? extractedStats.team1Stats : extractedStats.team2Stats;
@@ -399,20 +384,8 @@ export function UploadMatchButton() {
                 extractedStats.team2Stats.userId = appUser.id;
             }
 
-            // Try to generate roast, but don't fail if it doesn't work
-            let roastText = '';
-            try {
-                const roastResult = await generateMatchRoast({
-                    winningScore: matchResult === 'win' ? userStats.score : opponentStats.score,
-                    losingScore: matchResult === 'win' ? opponentStats.score : userStats.score,
-                    winnerName: matchResult === 'win' ? appUser.name : opponent.name,
-                    loserName: matchResult === 'win' ? opponent.name : appUser.name,
-                });
-                roastText = roastResult.roast;
-            } catch (roastError: any) {
-                console.warn('Failed to generate roast, continuing without it:', roastError?.message);
-                // Continue without roast - it's optional
-            }
+            // Get random pre-defined roast
+            const roastText = getRandomMatchRoast();
 
             const matchData = {
                 createdBy: appUser.id,
