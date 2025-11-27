@@ -100,7 +100,7 @@ export function BottomNavigation() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[100] border-t bg-background/98 backdrop-blur-md shadow-lg md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-      <div className="relative flex h-20 items-center justify-around px-2">
+      <div className="relative flex h-24 items-end pb-2 justify-around px-2">
         {mainLinks.map((link, index) => {
           if (!link) {
             return (
