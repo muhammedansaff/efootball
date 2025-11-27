@@ -6,16 +6,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { allBadges as staticBadges } from "@/lib/data";
 import { StatCard } from "@/components/stat-card";
-import { Trophy, Shield, Goal, Ratio, Percent, AlertTriangle, Disc3, Footprints, Target, GitCommitHorizontal, Spade, Hand, User as UserIcon, ShieldQuestion, Pencil } from "lucide-react";
+import { Trophy, Shield, Goal, Ratio, Percent, AlertTriangle, Disc3, Footprints, Target, GitCommitHorizontal, Spade, Hand, User as UserIcon, ShieldQuestion, Pencil, Crown } from "lucide-react";
 import { MatchCard } from "@/components/match-card";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, where } from "firebase/firestore";
+import { collection, query, orderBy, where, doc, updateDoc } from "firebase/firestore";
 import type { Match, Badge } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { EditProfileDialog } from "@/components/edit-profile-dialog";
 import { useState } from "react";
+import { UploadButton } from "@/utils/uploadthing";
+import { useToast } from "@/hooks/use-toast";
 
 
 const getIcon = (iconName: string) => {
@@ -27,6 +30,7 @@ const getIcon = (iconName: string) => {
 export default function ProfilePage() {
     const { appUser } = useAuth();
     const firestore = useFirestore();
+    const { toast } = useToast();
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
     const matchesQuery = useMemoFirebase(() =>
@@ -51,6 +55,219 @@ export default function ProfilePage() {
 
     return (
         <div className="space-y-8">
+            {/* Banner Section */}
+            <Card className="overflow-hidden">
+                <div className="relative h-48 md:h-72 lg:h-80 bg-gradient-to-r from-primary/20 to-primary/10 flex items-center justify-center">
+                    {appUser.bannerUrl && (
+                        <>
+                            {appUser.bannerType === 'video' ? (
+                                <video
+                                    src={appUser.bannerUrl}
+                                    className="w-full h-full object-contain"
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                />
+                            ) : (
+                                <img
+                                    src={appUser.bannerUrl}
+                                    alt="Profile banner"
+                                    className="w-full h-full object-contain"
+                                />
+                            )}
+                        </>
+                    )}
+                    <div className="absolute bottom-4 right-4 flex gap-2">
+                        <UploadButton
+                            endpoint="bannerImage"
+                            onClientUploadComplete={async (res) => {
+                                if (!firestore || !res?.[0]) return;
+                                try {
+                                    const userRef = doc(firestore, 'users', appUser.id);
+                                    await updateDoc(userRef, {
+                                        bannerUrl: res[0].url,
+                                        bannerType: 'image'
+                                    });
+                                    toast({
+                                        title: "Banner Updated!",
+                                        description: "Your banner image has been uploaded successfully.",
+                                    });
+                                } catch (error) {
+                                    console.error("Error updating banner:", error);
+                                    toast({
+                                        variant: "destructive",
+                                        title: "Update Failed",
+                                        description: "Could not update banner. Please try again.",
+                                    });
+                                }
+                            }}
+                            onUploadError={(error: Error) => {
+                                toast({
+                                    variant: "destructive",
+                                    title: "Upload Failed",
+                                    description: error.message,
+                                });
+                            }}
+                            appearance={{
+                                button: "bg-primary text-primary-foreground hover:bg-primary/90 text-sm px-3 py-2",
+                                allowedContent: "hidden"
+                            }}
+                            content={{
+                                button: "Upload Image"
+                            }}
+                        />
+                        <UploadButton
+                            endpoint="bannerVideo"
+                            onClientUploadComplete={async (res) => {
+                                if (!firestore || !res?.[0]) return;
+                                try {
+                                    const userRef = doc(firestore, 'users', appUser.id);
+                                    await updateDoc(userRef, {
+                                        bannerUrl: res[0].url,
+                                        bannerType: 'video'
+                                    });
+                                    toast({
+                                        title: "Banner Updated!",
+                                        description: "Your banner video has been uploaded successfully.",
+                                    });
+                                } catch (error) {
+                                    console.error("Error updating banner:", error);
+                                    toast({
+                                        variant: "destructive",
+                                        title: "Update Failed",
+                                        description: "Could not update banner. Please try again.",
+                                    });
+                                }
+                            }}
+                            onUploadError={(error: Error) => {
+                                toast({
+                                    variant: "destructive",
+                                    title: "Upload Failed",
+                                    description: error.message,
+                                });
+                            }}
+                            appearance={{
+                                button: "bg-secondary text-secondary-foreground hover:bg-secondary/90 text-sm px-3 py-2",
+                                allowedContent: "hidden"
+                            }}
+                            content={{
+                                button: "Upload Video"
+                            }}
+                        />
+                    </div>
+                </div>
+            </Card>
+
+            {/* Leaderboard Customization */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Crown className="h-5 w-5 text-primary" />
+                        Leaderboard Customization
+                    </CardTitle>
+                    <CardDescription>
+                        Upload a custom image and audio that will be displayed when you're #1 on the leaderboard!
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {/* Current Leaderboard Image Preview */}
+                    {appUser.leaderboardImageUrl && (
+                        <div className="space-y-2">
+                            <Label>Current Leaderboard Image</Label>
+                            <div className="relative h-32 w-full md:w-64 rounded-lg overflow-hidden border">
+                                <img
+                                    src={appUser.leaderboardImageUrl}
+                                    alt="Leaderboard celebration"
+                                    className="w-full h-full object-contain bg-muted"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Leaderboard Image Upload */}
+                    <div className="space-y-2">
+                        <Label>Celebration Image</Label>
+                        <UploadButton
+                            endpoint="leaderboardImage"
+                            onClientUploadComplete={async (res) => {
+                                if (!firestore || !res?.[0]) return;
+                                try {
+                                    const userRef = doc(firestore, 'users', appUser.id);
+                                    await updateDoc(userRef, {
+                                        leaderboardImageUrl: res[0].url
+                                    });
+                                    toast({
+                                        title: "Image Updated!",
+                                        description: "Your leaderboard celebration image has been uploaded.",
+                                    });
+                                } catch (error) {
+                                    console.error("Error updating leaderboard image:", error);
+                                    toast({
+                                        variant: "destructive",
+                                        title: "Update Failed",
+                                        description: "Could not update image. Please try again.",
+                                    });
+                                }
+                            }}
+                            onUploadError={(error: Error) => {
+                                toast({
+                                    variant: "destructive",
+                                    title: "Upload Failed",
+                                    description: error.message,
+                                });
+                            }}
+                        />
+                    </div>
+
+                    {/* Current Audio Preview */}
+                    {appUser.leaderboardAudioUrl && (
+                        <div className="space-y-2">
+                            <Label>Current Celebration Audio</Label>
+                            <audio controls className="w-full">
+                                <source src={appUser.leaderboardAudioUrl} />
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                    )}
+
+                    {/* Leaderboard Audio Upload */}
+                    <div className="space-y-2">
+                        <Label>Celebration Audio</Label>
+                        <UploadButton
+                            endpoint="leaderboardAudio"
+                            onClientUploadComplete={async (res) => {
+                                if (!firestore || !res?.[0]) return;
+                                try {
+                                    const userRef = doc(firestore, 'users', appUser.id);
+                                    await updateDoc(userRef, {
+                                        leaderboardAudioUrl: res[0].url
+                                    });
+                                    toast({
+                                        title: "Audio Updated!",
+                                        description: "Your leaderboard celebration audio has been uploaded.",
+                                    });
+                                } catch (error) {
+                                    console.error("Error updating leaderboard audio:", error);
+                                    toast({
+                                        variant: "destructive",
+                                        title: "Update Failed",
+                                        description: "Could not update audio. Please try again.",
+                                    });
+                                }
+                            }}
+                            onUploadError={(error: Error) => {
+                                toast({
+                                    variant: "destructive",
+                                    title: "Upload Failed",
+                                    description: error.message,
+                                });
+                            }}
+                        />
+                    </div>
+                </CardContent>
+            </Card>
+
             <Card>
                 <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6">
                     <div className="relative">

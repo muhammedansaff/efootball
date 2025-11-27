@@ -106,8 +106,18 @@ export function MatchCard({ match, currentUser, showRoast = false }: MatchCardPr
             
             setNewComment('');
             setVoiceRecording(null);
+            
+            toast({
+                title: "Comment Posted!",
+                description: "Your comment has been added successfully.",
+            });
         } catch (error) {
             console.error("Error adding comment:", error);
+            toast({
+                variant: "destructive",
+                title: "Failed to Post Comment",
+                description: error instanceof Error ? error.message : "Could not post your comment. Please try again.",
+            });
         } finally {
             setIsSubmitting(false);
         }

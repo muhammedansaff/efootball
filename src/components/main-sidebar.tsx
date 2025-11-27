@@ -24,6 +24,7 @@ import {
   GitCommitHorizontal,
   Award,
   Skull,
+  TrendingUp,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
@@ -46,6 +47,7 @@ export function MainSidebar() {
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/matches', label: 'Matches', icon: Swords },
     { href: '/stats', label: 'Stats', icon: BarChart },
+    { href: '/trends', label: 'Trends', icon: TrendingUp },
     { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { href: '/losers', label: 'Hall of Losers', icon: Skull },
     { href: '/users', label: 'Users', icon: Users },

@@ -11,21 +11,36 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Crown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, limit } from 'firebase/firestore';
 import type { User } from '@/lib/types';
+import { useEffect, useRef } from 'react';
 
 
 export default function LeaderboardPage() {
   const firestore = useFirestore();
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   const allTimeQuery = useMemoFirebase(() => 
     firestore ? query(collection(firestore, 'users'), orderBy('stats.wins', 'desc'), limit(10)) : null, 
     [firestore]
   );
   const { data: allTime, isLoading: isLoadingAllTime } = useCollection<User>(allTimeQuery);
+
+  // Get the first place user
+  const firstPlaceUser = allTime?.[0];
+
+  // Auto-play audio when first place user has custom audio
+  useEffect(() => {
+    if (firstPlaceUser?.leaderboardAudioUrl && audioRef.current) {
+      audioRef.current.play().catch(error => {
+        console.log("Audio autoplay prevented:", error);
+      });
+    }
+  }, [firstPlaceUser?.leaderboardAudioUrl]);
 
   const renderLeaderboard = (data: User[] | null, isLoading: boolean) => {
     if (isLoading) {
@@ -86,6 +101,73 @@ export default function LeaderboardPage() {
         title="Leaderboard"
         description="See who's dominating the barn."
       />
+
+      {/* First Place Celebration with Banner */}
+      {firstPlaceUser && (firstPlaceUser.leaderboardImageUrl || firstPlaceUser.leaderboardAudioUrl || firstPlaceUser.bannerUrl) && (
+        <Card className="overflow-hidden border-primary/50 bg-gradient-to-r from-primary/5 to-primary/10">
+          <CardContent className="p-6">
+            <div className="flex flex-col lg:flex-row items-start gap-6">
+              {/* Left Side - Celebration Image & Text */}
+              <div className="flex-1 flex flex-col md:flex-row items-center gap-6">
+                {/* Celebration Image */}
+                {firstPlaceUser.leaderboardImageUrl && (
+                  <div className="relative w-full md:w-48 h-48 rounded-lg overflow-hidden border-2 border-primary/30 flex-shrink-0">
+                    <img
+                      src={firstPlaceUser.leaderboardImageUrl}
+                      alt={`${firstPlaceUser.name}'s celebration`}
+                      className="w-full h-full object-contain bg-muted"
+                    />
+                  </div>
+                )}
+                
+                {/* Celebration Text */}
+                <div className="flex-1 text-center md:text-left">
+                  <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
+                    <Crown className="h-8 w-8 text-primary animate-bounce-slow" />
+                    <h3 className="font-headline text-3xl text-primary">Current Champion</h3>
+                  </div>
+                  <p className="text-xl font-semibold mb-1">{firstPlaceUser.name}</p>
+                  <p className="text-muted-foreground">
+                    {firstPlaceUser.stats.wins} wins • {firstPlaceUser.stats.losses} losses
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Side - Banner */}
+              {firstPlaceUser.bannerUrl && (
+                <div className="w-full lg:w-80 flex-shrink-0">
+                  <div className="relative h-64 rounded-lg overflow-hidden border-2 border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5">
+                    {firstPlaceUser.bannerType === 'video' ? (
+                      <video
+                        src={firstPlaceUser.bannerUrl}
+                        className="w-full h-full object-contain"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      />
+                    ) : (
+                      <img
+                        src={firstPlaceUser.bannerUrl}
+                        alt={`${firstPlaceUser.name}'s banner`}
+                        className="w-full h-full object-contain"
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Hidden Audio Player */}
+            {firstPlaceUser.leaderboardAudioUrl && (
+              <audio ref={audioRef} loop>
+                <source src={firstPlaceUser.leaderboardAudioUrl} />
+              </audio>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <Tabs defaultValue="all-time">
         <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
           <TabsTrigger value="daily">Daily</TabsTrigger>

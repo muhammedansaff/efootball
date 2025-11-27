@@ -30,6 +30,10 @@ export type User = {
   avatarUrl: string;
   email: string;
   badges: string[];
+  bannerUrl?: string;
+  bannerType?: 'image' | 'video';
+  leaderboardImageUrl?: string;
+  leaderboardAudioUrl?: string;
   stats: {
     wins: number;
     losses: number;

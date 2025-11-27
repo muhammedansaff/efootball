@@ -6,13 +6,12 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Loader2, Upload, User as UserIcon } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useFirestore } from "@/firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@/lib/types";
-import Image from "next/image";
-import { uploadAvatar } from "@/lib/upload-avatar";
+import { UploadButton } from "@/utils/uploadthing";
 
 interface EditProfileDialogProps {
     user: User;
@@ -27,66 +26,14 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
     const [name, setName] = useState(user.name);
     const [realName, setRealName] = useState(user.realName || '');
     const [pesTeamName, setPesTeamName] = useState(user.pesTeamName || '');
-    const [avatarPreview, setAvatarPreview] = useState<string | null>(user.avatarUrl);
-    const [newAvatarData, setNewAvatarData] = useState<string | null>(null);
+    const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl);
     const [isSaving, setIsSaving] = useState(false);
-
-    const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = document.createElement('img');
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 200;
-                const MAX_HEIGHT = 200;
-                let width = img.width;
-                let height = img.height;
-
-                if (width > height) {
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
-                } else {
-                    if (height > MAX_HEIGHT) {
-                        width *= MAX_HEIGHT / height;
-                        height = MAX_HEIGHT;
-                    }
-                }
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) return;
-                ctx.drawImage(img, 0, 0, width, height);
-
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                setAvatarPreview(dataUrl);
-                setNewAvatarData(dataUrl);
-            };
-            img.src = e.target?.result as string;
-        };
-        reader.readAsDataURL(file);
-    };
 
     const handleSave = async () => {
         if (!firestore) return;
 
         setIsSaving(true);
         try {
-            let avatarUrl = user.avatarUrl;
-
-            // Upload new avatar if changed
-            if (newAvatarData) {
-                toast({
-                    title: "Uploading avatar...",
-                    description: "Please wait while we upload your new profile picture.",
-                });
-                avatarUrl = await uploadAvatar(newAvatarData);
-            }
-
             // Update user document
             const userRef = doc(firestore, 'users', user.id);
             await updateDoc(userRef, {
@@ -128,26 +75,34 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
                     {/* Avatar Upload */}
                     <div className="flex flex-col items-center gap-4">
                         <Label>Profile Picture</Label>
-                        <div className="relative w-24 h-24 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                            {avatarPreview ? (
-                                <Image src={avatarPreview} alt="Avatar preview" layout="fill" objectFit="cover" />
-                            ) : (
-                                <UserIcon className="w-12 h-12 text-muted-foreground" />
-                            )}
-                            <label
-                                htmlFor="avatar-upload-edit"
-                                className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
-                            >
-                                <Upload className="w-6 h-6 text-white" />
-                            </label>
-                            <input
-                                id="avatar-upload-edit"
-                                type="file"
-                                className="sr-only"
-                                accept="image/png, image/jpeg"
-                                onChange={handleAvatarChange}
-                            />
-                        </div>
+                        <Avatar className="h-24 w-24 border-4 border-primary">
+                            <AvatarImage src={avatarUrl} alt="Avatar preview" />
+                            <AvatarFallback className="text-4xl">{name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <UploadButton
+                            endpoint="profileImage"
+                            onClientUploadComplete={async (res) => {
+                                if (!res?.[0]) return;
+                                setAvatarUrl(res[0].url);
+                                toast({
+                                    title: "Avatar Uploaded!",
+                                    description: "Your profile picture has been uploaded successfully.",
+                                });
+                            }}
+                            onUploadError={(error: Error) => {
+                                toast({
+                                    variant: "destructive",
+                                    title: "Upload Failed",
+                                    description: error.message,
+                                });
+                            }}
+                            appearance={{
+                                button: "text-sm",
+                            }}
+                            content={{
+                                button: "Change Avatar"
+                            }}
+                        />
                     </div>
 
                     {/* Display Name */}
