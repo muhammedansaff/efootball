@@ -12,7 +12,7 @@ import { Card, CardContent } from "./ui/card";
 import { Label } from "./ui/label";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, getDoc, writeBatch, query, arrayUnion, DocumentReference, where, getDocs } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, getDoc, writeBatch, query, arrayUnion, DocumentReference, where, getDocs, setDoc } from "firebase/firestore";
 import type { User, Match, Badge } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -310,22 +310,8 @@ export function UploadMatchButton() {
         setIsSaving(true);
         
         try {
-            // Check for duplicates
+            // Create matchHash to use as document ID
             const matchHash = createMatchHash(extractedStats, appUser.id, opponent.id);
-            const matchesRef = collection(firestore, 'matches');
-            const q = query(matchesRef, where("matchHash", "==", matchHash));
-            const querySnapshot = await getDocs(q);
-
-            if (!querySnapshot.empty) {
-                toast({
-                    variant: "destructive",
-                    title: "Duplicate Match",
-                    description: "This match has already been uploaded.",
-                });
-                setIsSaving(false);
-                return;
-            }
-
 
             // 1. Prepare Match Data & Get Random Roast
             // Use manual selection to determine stats
@@ -366,7 +352,21 @@ export function UploadMatchButton() {
             // Use a batch to write to both collections atomically
             const batch = writeBatch(firestore);
             
-            const globalMatchRef = doc(collection(firestore, 'matches'));
+            // Use matchHash as document ID - this automatically prevents duplicates
+            const globalMatchRef = doc(firestore, 'matches', matchHash);
+            
+            // Check if document already exists
+            const existingDoc = await getDoc(globalMatchRef);
+            if (existingDoc.exists()) {
+                toast({
+                    variant: "destructive",
+                    title: "Duplicate Match",
+                    description: "This match has already been uploaded.",
+                });
+                setIsSaving(false);
+                return;
+            }
+            
             batch.set(globalMatchRef, matchData);
 
             const userMatchRef = doc(collection(firestore, 'users', appUser.id, 'matches'));
