@@ -83,7 +83,7 @@ export async function manageBadges(firestore: any, forceCreate = false) {
 }
 
 // --- Dynamic Milestone Management ---
-const milestoneCreationJobs = [
+const milestoneCreationJobs: Array<Omit<Milestone, 'id' | 'lastUpdated'>> = [
     { title: "First Win", description: "Get your first win in the barn.", stat: "wins", target: 1 },
     { title: "10 Wins", description: "Achieve 10 total wins.", stat: "wins", target: 10 },
     { title: "25 Wins", description: "Achieve 25 total wins.", stat: "wins", target: 25 },
@@ -103,15 +103,17 @@ async function manageMilestones(firestore: any) {
         if (!lastMilestoneSnap.empty) {
             const lastMilestone = lastMilestoneSnap.docs[0].data();
             const lastUpdated = (lastMilestone.lastUpdated as Timestamp).toDate();
-            const threeDaysAgo = new Date();
-            threeDaysAgo.setDate(threeDaysAgo.getDate() - 3); // Approx twice a week
-            if (lastUpdated > threeDaysAgo) {
+            const twoDaysAgo = new Date();
+            twoDaysAgo.setDate(twoDaysAgo.getDate() - 2); // Create new milestone every 2 days
+            
+            if (lastUpdated > twoDaysAgo) {
                 shouldCreate = false;
+                console.log(`Last milestone created ${Math.floor((Date.now() - lastUpdated.getTime()) / (1000 * 60 * 60 * 24))} days ago. Waiting for 2 days to pass.`);
             }
         }
 
         if (shouldCreate) {
-            console.log("Time to create new milestones...");
+            console.log("Time to create new milestone (2 days have passed since last creation)...");
             const existingMilestonesSnap = await getDocs(milestonesRef);
             const existingMilestoneTitles = existingMilestonesSnap.docs.map(d => d.data().title);
 
@@ -123,7 +125,7 @@ async function manageMilestones(firestore: any) {
                     lastUpdated: serverTimestamp() as any,
                 };
                 await addDoc(milestonesRef, newMilestone);
-                console.log(`Successfully created new milestone: ${newMilestone.title}`);
+                console.log(`✅ Successfully created new milestone: ${newMilestone.title} (Target: ${newMilestone.target} ${newMilestone.stat})`);
             } else {
                 console.log("All predefined milestones have been created.");
             }
@@ -181,7 +183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
 
   useEffect(() => {
-    const overallLoading = isUserLoading || (firebaseUser && isAppUserLoading);
+    const overallLoading = Boolean((isUserLoading ?? true) || (firebaseUser && (isAppUserLoading ?? true)));
     setLoading(overallLoading);
 
     if (overallLoading) return;
@@ -227,7 +229,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         email: data.email,
         avatarUrl: data.avatarUrl,
         badges: [],
-        stats: { wins: 0, losses: 0, draws: 0, goalsFor: 0, goalsAgainst: 0, shots: 0, shotsOnTarget: 0, passes: 0, successfulPasses: 0, tackles: 0, saves: 0, redCards: 0, },
+        stats: { 
+          wins: 0, 
+          losses: 0, 
+          draws: 0, 
+          goalsFor: 0, 
+          goalsAgainst: 0, 
+          shots: 0, 
+          shotsOnTarget: 0, 
+          passes: 0, 
+          successfulPasses: 0, 
+          tackles: 0, 
+          saves: 0, 
+          fouls: 0,
+          redCards: 0,
+          totalPossession: 0,
+          matchesPlayed: 0,
+        },
       };
 
       await setDoc(doc(firestore, 'users', fbUser.uid), newUser);

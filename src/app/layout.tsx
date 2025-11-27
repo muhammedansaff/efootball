@@ -8,6 +8,13 @@ import { FirebaseClientProvider } from '@/firebase';
 export const metadata: Metadata = {
   title: 'Football Banter Barn',
   description: 'Settle scores and share the banter.',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: 'cover',
+  },
 };
 
 export default function RootLayout({
