@@ -13,11 +13,11 @@ import { Label } from "./ui/label";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, getDoc, writeBatch, query, arrayUnion, DocumentReference, where, getDocs } from "firebase/firestore";
-import type { User, Match, Badge, HallEntry } from "@/lib/types";
+import type { User, Match, Badge } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { manageBadges } from "@/providers/auth-provider";
-import { getRandomMatchRoast, getRandomHallOfFameMessage, getRandomHallOfShameMessage } from "@/lib/random-messages";
+import { getRandomMatchRoast } from "@/lib/random-messages";
 
 const checkAndAwardBadges = async (
     firestore: any,
@@ -208,47 +208,6 @@ export function UploadMatchButton() {
         if(!firestore) return;
         try {
             const batch = writeBatch(firestore);
-
-            // Get random pre-defined roasts
-            const fameRoast = getRandomHallOfFameMessage();
-            const shameRoast = getRandomHallOfShameMessage();
-            
-            const goalDifference = Math.abs(userStats.score - opponentStats.score);
-
-            const fameEntry: Omit<HallEntry, 'id'> = {
-                type: 'fame',
-                title: 'Glorious Victory',
-                description: `${winner.name} defeated ${loser.name}`,
-                matchId: matchRef.id,
-                userId: winner.id,
-                opponentId: loser.id,
-                stat: `Won by ${goalDifference} goals`,
-                roast: fameRoast,
-                date: serverTimestamp() as any,
-                winnerId: winner.id,
-                loserId: loser.id,
-            };
-
-            const shameEntry: Omit<HallEntry, 'id'> = {
-                type: 'shame',
-                title: 'Crushing Defeat',
-                description: `${loser.name} was defeated by ${winner.name}`,
-                matchId: matchRef.id,
-                userId: loser.id,
-                opponentId: winner.id,
-                stat: `Lost by ${goalDifference} goals`,
-                roast: shameRoast,
-                date: serverTimestamp() as any,
-                winnerId: winner.id,
-                loserId: loser.id,
-            };
-
-            batch.set(doc(collection(firestore, 'hallofshame')), fameEntry);
-            batch.set(doc(collection(firestore, 'hallofshame')), shameEntry);
-
-            await batch.commit();
-            
-            console.log('✅ Hall of Fame/Shame entries created successfully');
 
             // Badge Checking
             const checkAndToastBadges = async (userId: string, isCurrentUser: boolean) => {

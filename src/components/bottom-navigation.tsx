@@ -12,6 +12,7 @@ import {
   Users,
   LogOut,
   Target,
+  Skull,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -93,7 +94,7 @@ const MoreMenu = () => {
 export function BottomNavigation() {
   const mainLinks = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { href: '/hall-of-shame', icon: ShieldHalf, label: 'Shame' },
+    { href: '/losers', icon: Skull, label: 'Losers' },
     null, // Placeholder for Upload button
     { href: '/leaderboard', icon: Trophy, label: 'Leaders' },
   ];

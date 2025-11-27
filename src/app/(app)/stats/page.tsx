@@ -116,7 +116,7 @@ export default function StatsPage() {
               <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
             </CardHeader>
             <Avatar className="h-16 w-16 border-2 border-primary mb-2">
-              <AvatarImage src={card.user.avatarUrl} alt={card.user.name} />
+              <AvatarImage src={card.user.avatarUrl || null} alt={card.user.name} />
               <AvatarFallback className="text-2xl">{card.user.name?.charAt(0)}</AvatarFallback>
             </Avatar>
             <CardContent className="p-0 text-center">

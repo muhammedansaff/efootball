@@ -23,6 +23,7 @@ import {
   BarChart,
   GitCommitHorizontal,
   Award,
+  Skull,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
@@ -44,10 +45,11 @@ export function MainSidebar() {
   const menuItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/matches', label: 'Matches', icon: Swords },
+    { href: '/stats', label: 'Stats', icon: BarChart },
     { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+    { href: '/losers', label: 'Hall of Losers', icon: Skull },
     { href: '/users', label: 'Users', icon: Users },
     { href: '/badges', label: 'Badges', icon: Award },
-    { href: '/hall-of-shame', label: 'Hall of Shame', icon: ShieldHalf },
     { href: '/rivals', label: 'Rivals', icon: Users },
     { href: '/journey', label: 'Journey', icon: GitCommitHorizontal },
     { href: '/profile', label: 'My Profile', icon: BarChart },

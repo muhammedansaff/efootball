@@ -1,11 +1,11 @@
 import messages from './messages.json';
 
+export type MessageCategory = 'matchRoasts';
+
 /**
- * Get a random message from a specific category
- * @param category - The category of message to retrieve ('matchRoasts', 'hallOfFameMessages', 'hallOfShameMessages')
- * @returns A random message from the specified category
+ * Get a random message from the specific category
  */
-export function getRandomMessage(category: 'matchRoasts' | 'hallOfFameMessages' | 'hallOfShameMessages'): string {
+export function getRandomMessage(category: MessageCategory): string {
   const messageArray = messages[category];
   const randomIndex = Math.floor(Math.random() * messageArray.length);
   return messageArray[randomIndex];
@@ -16,18 +16,4 @@ export function getRandomMessage(category: 'matchRoasts' | 'hallOfFameMessages' 
  */
 export function getRandomMatchRoast(): string {
   return getRandomMessage('matchRoasts');
-}
-
-/**
- * Get a random hall of fame message
- */
-export function getRandomHallOfFameMessage(): string {
-  return getRandomMessage('hallOfFameMessages');
-}
-
-/**
- * Get a random hall of shame message
- */
-export function getRandomHallOfShameMessage(): string {
-  return getRandomMessage('hallOfShameMessages');
 }
