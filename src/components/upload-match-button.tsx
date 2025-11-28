@@ -369,6 +369,7 @@ export function UploadMatchButton() {
                 comments: [],
                 matchHash: matchHash,
                 userTeamSide: userTeamSide, // Explicitly save which side the user was on
+                ...(extractedStats.penaltyScore && { penaltyScore: extractedStats.penaltyScore }),
             };
             
             // Use a batch to write to both collections atomically
@@ -463,12 +464,17 @@ export function UploadMatchButton() {
     }
 
 
-    const StatDisplay = ({ stats }: { stats: PlayerStats }) => (
+    const StatDisplay = ({ stats, showPenaltyScore }: { stats: PlayerStats, showPenaltyScore?: number }) => (
         <Card>
             <CardContent className="p-4 text-sm">
                 <h4 className="font-bold text-base mb-2">{stats.name}</h4>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                     <p>Score: <span className="font-semibold">{stats.score}</span></p>
+                    {showPenaltyScore !== undefined && (
+                        <p className="col-span-2 text-xs text-muted-foreground">
+                            ⚽ Won on penalties: <span className="font-semibold">{showPenaltyScore}</span>
+                        </p>
+                    )}
                     <p>Possession: <span className="font-semibold">{stats.possession}</span></p>
                     <p>Shots: <span className="font-semibold">{stats.shots} ({stats.shotsOnTarget} on target)</span></p>
                     <p>Passes: <span className="font-semibold">{stats.successfulPasses}/{stats.passes}</span></p>
@@ -557,9 +563,22 @@ export function UploadMatchButton() {
                     {extractedStats && (
                         <div className="space-y-6">
                             <h3 className="text-lg font-semibold text-center">Confirm Details</h3>
+                            {extractedStats.penaltyScore && (
+                                <div className="text-center p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-md">
+                                    <p className="text-sm font-medium text-yellow-600 dark:text-yellow-500">
+                                        ⚽ Match decided by penalties: {extractedStats.penaltyScore.team1} - {extractedStats.penaltyScore.team2}
+                                    </p>
+                                </div>
+                            )}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <StatDisplay stats={extractedStats.team1Stats} />
-                                <StatDisplay stats={extractedStats.team2Stats} />
+                                <StatDisplay 
+                                    stats={extractedStats.team1Stats} 
+                                    showPenaltyScore={extractedStats.penaltyScore?.team1}
+                                />
+                                <StatDisplay 
+                                    stats={extractedStats.team2Stats}
+                                    showPenaltyScore={extractedStats.penaltyScore?.team2}
+                                />
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">

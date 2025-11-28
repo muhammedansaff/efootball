@@ -69,6 +69,10 @@ export type Match = {
   team2Stats: PlayerStats;
   matchHash: string; // Unique fingerprint for the match
   userTeamSide?: 'team1' | 'team2';
+  penaltyScore?: {
+    team1: number;
+    team2: number;
+  };
 };
 
 export type Comment = {

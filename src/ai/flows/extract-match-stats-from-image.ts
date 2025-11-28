@@ -46,6 +46,10 @@ const ExtractMatchStatsFromImageOutputSchema = z.object({
   team2Name: z.string().describe('The name of the second team/player.'),
   team1Stats: PlayerStatsSchema.describe("Statistics for the first team/player."),
   team2Stats: PlayerStatsSchema.describe("Statistics for the second team/player."),
+  penaltyScore: z.object({
+    team1: z.number().describe('Penalty shootout score for team 1'),
+    team2: z.number().describe('Penalty shootout score for team 2'),
+  }).optional().describe('Penalty shootout scores if the match was decided by penalties (e.g., PK: 1 - 2)'),
 });
 export type ExtractMatchStatsFromImageOutput = z.infer<typeof ExtractMatchStatsFromImageOutputSchema>;
 
@@ -77,6 +81,10 @@ const prompt = ai.definePrompt({
   - Interceptions
   - Tackles
   - Saves
+  - Penalty Shootout Score (if present, look for indicators like "PK:", "Penalties:", or similar text showing penalty scores)
+
+  IMPORTANT: If you see penalty shootout information (e.g., "PK: 1 - 2"), extract it into the penaltyScore field. 
+  The format might be "PK: X - Y" where X is team1's penalty score and Y is team2's penalty score.
 
   Ensure the extracted data is accurate and corresponds to the information presented in the image.
 

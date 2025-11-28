@@ -208,6 +208,11 @@ export function MatchCard({ match, currentUser, showRoast = false }: MatchCardPr
                                 <span className="font-headline text-2xl text-muted-foreground">-</span>
                                 <span className={cn("font-headline text-4xl", winner === 'team2' ? "text-yellow-500" : winner === 'team1' ? "text-red-500" : "")}>{score2}</span>
                             </div>
+                            {match.penaltyScore && (
+                                <div className="text-xs font-medium text-yellow-600 dark:text-yellow-500 mt-1">
+                                    ⚽ Penalties: {match.penaltyScore.team1} - {match.penaltyScore.team2}
+                                </div>
+                            )}
                             <div className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-2">
                                 <OutcomeIcon outcome={outcome} />
                                 <span>{getDate(match.date)}</span>

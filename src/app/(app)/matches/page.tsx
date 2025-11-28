@@ -75,6 +75,7 @@ export default function MatchesPage() {
         
         // Filter matches for today only
         const todayMatches = matches.filter(match => {
+            if (!match.date) return false;
             const matchDate = typeof match.date === 'string' 
                 ? new Date(match.date) 
                 : match.date.toDate();
