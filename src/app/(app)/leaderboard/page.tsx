@@ -12,17 +12,19 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Crown, Loader2 } from "lucide-react";
+import { Crown, Loader2, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, limit } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { useEffect, useRef } from 'react';
+import { Button } from "@/components/ui/button";
 
 
 export default function LeaderboardPage() {
   const firestore = useFirestore();
   const audioRef = useRef<HTMLAudioElement>(null);
+  const leaderboardRef = useRef<HTMLDivElement>(null);
 
   const allTimeQuery = useMemoFirebase(() => 
     firestore ? query(collection(firestore, 'users'), orderBy('stats.wins', 'desc'), limit(10)) : null, 
@@ -41,6 +43,10 @@ export default function LeaderboardPage() {
       });
     }
   }, [firstPlaceUser?.leaderboardAudioUrl]);
+
+  const scrollToLeaderboard = () => {
+    leaderboardRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const renderLeaderboard = (data: User[] | null, isLoading: boolean) => {
     if (isLoading) {
@@ -100,7 +106,11 @@ export default function LeaderboardPage() {
       <PageHeader
         title="Leaderboard"
         description="See who's dominating the barn."
-      />
+      >
+        <Button variant="outline" size="sm" onClick={scrollToLeaderboard}>
+          View Table <ArrowDown className="ml-2 h-4 w-4" />
+        </Button>
+      </PageHeader>
 
       {/* First Place Celebration - Redesigned */}
       {firstPlaceUser && (firstPlaceUser.leaderboardImageUrl || firstPlaceUser.leaderboardAudioUrl || firstPlaceUser.bannerUrl) && (
@@ -220,22 +230,24 @@ export default function LeaderboardPage() {
         </Card>
       )}
 
-      <Tabs defaultValue="all-time">
-        <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
-          <TabsTrigger value="daily">Daily</TabsTrigger>
-          <TabsTrigger value="monthly">Monthly</TabsTrigger>
-          <TabsTrigger value="all-time">All-Time</TabsTrigger>
-        </TabsList>
-        <TabsContent value="all-time">
-          {renderLeaderboard(allTime, isLoadingAllTime)}
-        </TabsContent>
-        <TabsContent value="daily">
-          <p className="text-muted-foreground p-8 text-center">Daily leaderboards are coming soon!</p>
-        </TabsContent>
-        <TabsContent value="monthly">
-          <p className="text-muted-foreground p-8 text-center">Monthly leaderboards are coming soon!</p>
-        </TabsContent>
-      </Tabs>
+      <div ref={leaderboardRef}>
+        <Tabs defaultValue="all-time">
+          <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
+            <TabsTrigger value="daily">Daily</TabsTrigger>
+            <TabsTrigger value="monthly">Monthly</TabsTrigger>
+            <TabsTrigger value="all-time">All-Time</TabsTrigger>
+          </TabsList>
+          <TabsContent value="all-time">
+            {renderLeaderboard(allTime, isLoadingAllTime)}
+          </TabsContent>
+          <TabsContent value="daily">
+            <p className="text-muted-foreground p-8 text-center">Daily leaderboards are coming soon!</p>
+          </TabsContent>
+          <TabsContent value="monthly">
+            <p className="text-muted-foreground p-8 text-center">Monthly leaderboards are coming soon!</p>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

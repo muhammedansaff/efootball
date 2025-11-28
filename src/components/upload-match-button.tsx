@@ -81,14 +81,36 @@ const createMatchHash = (stats: ExtractMatchStatsFromImageOutput, userId: string
     const fields = [
         sortedParticipants[0],
         sortedParticipants[1],
-        team1Stats.score, team2Stats.score,
-        team1Stats.possession, team2Stats.possession,
-        team1Stats.shots, team2Stats.shots,
-        team1Stats.shotsOnTarget, team2Stats.shotsOnTarget,
-        team1Stats.saves, team2Stats.saves,
-        team1Stats.passes, team2Stats.passes,
-        team1Stats.tackles, team2Stats.tackles,
-        team1Stats.fouls, team2Stats.fouls,
+        // Team 1 stats
+        team1Stats.score,
+        team1Stats.possession,
+        team1Stats.shots,
+        team1Stats.shotsOnTarget,
+        team1Stats.saves,
+        team1Stats.passes,
+        team1Stats.successfulPasses,
+        team1Stats.tackles,
+        team1Stats.fouls,
+     
+        team1Stats.freeKicks,
+        team1Stats.offsides,
+        
+        team1Stats.redCards,
+        // Team 2 stats
+        team2Stats.score,
+        team2Stats.possession,
+        team2Stats.shots,
+        team2Stats.shotsOnTarget,
+        team2Stats.saves,
+        team2Stats.passes,
+        team2Stats.successfulPasses,
+        team2Stats.tackles,
+        team2Stats.fouls,
+        
+        team2Stats.freeKicks,
+        team2Stats.offsides,
+        
+        team2Stats.redCards,
     ];
     return fields.join('|');
 }
@@ -357,6 +379,7 @@ export function UploadMatchButton() {
             
             // Check if document already exists
             const existingDoc = await getDoc(globalMatchRef);
+            console.log('existingDoc ID:', existingDoc.id);
             if (existingDoc.exists()) {
                 toast({
                     variant: "destructive",
