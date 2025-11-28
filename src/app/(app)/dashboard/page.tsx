@@ -112,14 +112,21 @@ export default function DashboardPage() {
   const [showSuspense, setShowSuspense] = useState(true);
   
   useEffect(() => {
+    // Don't show if no biggest loss or still loading
+    if (!biggestLoss || isLoadingMatches) return;
+    
     const lastSeenTimestamp = localStorage.getItem('hasSeenBiggestLoserDashboard');
+    const lastSeenMatchId = localStorage.getItem('lastSeenLoserMatchId');
     const now = Date.now();
     const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
     
-    // Show if never seen OR if more than 1 hour has passed since last viewing
-    const shouldShow = !lastSeenTimestamp || (now - parseInt(lastSeenTimestamp)) > oneHour;
+    // Only show if:
+    // 1. Never seen before OR more than 1 hour has passed since last viewing
+    // 2. AND it's a different match than the last one we showed
+    const shouldShow = (!lastSeenTimestamp || (now - parseInt(lastSeenTimestamp)) > oneHour) 
+                       && lastSeenMatchId !== biggestLoss.id;
     
-    if (shouldShow && biggestLoss && !isLoadingMatches) {
+    if (shouldShow) {
       // Delay to create suspense
       setTimeout(() => {
         setShowLoserCelebration(true);
@@ -130,13 +137,16 @@ export default function DashboardPage() {
         }, 2500);
       }, 1500);
     }
-  }, [biggestLoss, isLoadingMatches]);
+  }, [biggestLoss?.id, isLoadingMatches]); // Only depend on the match ID, not the entire object
 
   const handleCloseLoserCelebration = () => {
     setShowLoserCelebration(false);
     setShowSuspense(true);
-    // Store current timestamp instead of just 'true'
+    // Store current timestamp and match ID
     localStorage.setItem('hasSeenBiggestLoserDashboard', Date.now().toString());
+    if (biggestLoss) {
+      localStorage.setItem('lastSeenLoserMatchId', biggestLoss.id);
+    }
   };
 
 

@@ -95,10 +95,17 @@ export default function MatchDetailsPage() {
                             </Avatar>
                             <span className="font-bold text-xl">{match.team1Name}</span>
                         </div>
-                        <div className="font-headline text-6xl">
-                            <span className={cn(match.team1Stats.score > match.team2Stats.score && "text-primary")}>{match.team1Stats.score}</span>
-                            <span className="mx-4 text-muted-foreground">-</span>
-                            <span className={cn(match.team2Stats.score > match.team1Stats.score && "text-primary")}>{match.team2Stats.score}</span>
+                        <div className="text-center">
+                            <div className="font-headline text-6xl">
+                                <span className={cn(match.team1Stats.score > match.team2Stats.score && "text-primary")}>{match.team1Stats.score}</span>
+                                <span className="mx-4 text-muted-foreground">-</span>
+                                <span className={cn(match.team2Stats.score > match.team1Stats.score && "text-primary")}>{match.team2Stats.score}</span>
+                            </div>
+                            {match.penaltyScore && (
+                                <p className="text-sm font-medium text-yellow-600 dark:text-yellow-500 mt-2">
+                                    ⚽ Penalties: {match.penaltyScore.team1} - {match.penaltyScore.team2}
+                                </p>
+                            )}
                         </div>
                         <div className="flex flex-col items-center gap-2">
                              <Avatar className="h-16 w-16">

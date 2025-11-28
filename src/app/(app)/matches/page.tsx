@@ -295,6 +295,11 @@ export default function MatchesPage() {
                                             {biggestWin.team2Stats.score}
                                         </span>
                                     </div>
+                                    {biggestWin.penaltyScore && (
+                                        <p className="text-xs text-yellow-600 dark:text-yellow-500 mt-2">
+                                            ⚽ Penalties: {biggestWin.penaltyScore.team1} - {biggestWin.penaltyScore.team2}
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="space-y-1 text-right">
                                     <p className="text-sm text-muted-foreground">Winning Score</p>

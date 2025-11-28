@@ -115,6 +115,18 @@ const createMatchHash = (stats: ExtractMatchStatsFromImageOutput, userId: string
     return fields.join('|');
 }
 
+// Create a URL-friendly ID from the matchHash using a simple hash function
+const createUrlFriendlyId = (matchHash: string): string => {
+    let hash = 0;
+    for (let i = 0; i < matchHash.length; i++) {
+        const char = matchHash.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    // Convert to base36 (0-9, a-z) and make it positive
+    return Math.abs(hash).toString(36);
+}
+
 export function UploadMatchButton() {
     const { appUser } = useAuth();
     const firestore = useFirestore();
@@ -332,8 +344,10 @@ export function UploadMatchButton() {
         setIsSaving(true);
         
         try {
-            // Create matchHash to use as document ID
+            // Create matchHash for duplicate detection
             const matchHash = createMatchHash(extractedStats, appUser.id, opponent.id);
+            // Create URL-friendly ID for the document
+            const urlFriendlyId = createUrlFriendlyId(matchHash);
 
             // 1. Prepare Match Data & Get Random Roast
             // Use manual selection to determine stats
@@ -367,7 +381,7 @@ export function UploadMatchButton() {
                 team1Stats: extractedStats.team1Stats, // Save exactly as extracted (now with userIds)
                 team2Stats: extractedStats.team2Stats, // Save exactly as extracted (now with userIds)
                 comments: [],
-                matchHash: matchHash,
+                matchHash: matchHash, // Keep for duplicate detection
                 userTeamSide: userTeamSide, // Explicitly save which side the user was on
                 ...(extractedStats.penaltyScore && { penaltyScore: extractedStats.penaltyScore }),
             };
@@ -375,13 +389,14 @@ export function UploadMatchButton() {
             // Use a batch to write to both collections atomically
             const batch = writeBatch(firestore);
             
-            // Use matchHash as document ID - this automatically prevents duplicates
-            const globalMatchRef = doc(firestore, 'matches', matchHash);
+            // Check for duplicates using matchHash field query instead of document ID
+            const duplicateQuery = query(
+                collection(firestore, 'matches'),
+                where('matchHash', '==', matchHash)
+            );
+            const duplicateSnapshot = await getDocs(duplicateQuery);
             
-            // Check if document already exists
-            const existingDoc = await getDoc(globalMatchRef);
-            console.log('existingDoc ID:', existingDoc.id);
-            if (existingDoc.exists()) {
+            if (!duplicateSnapshot.empty) {
                 toast({
                     variant: "destructive",
                     title: "Duplicate Match",
@@ -391,6 +406,8 @@ export function UploadMatchButton() {
                 return;
             }
             
+            // Use URL-friendly ID as document ID
+            const globalMatchRef = doc(firestore, 'matches', urlFriendlyId);
             batch.set(globalMatchRef, matchData);
 
             const userMatchRef = doc(collection(firestore, 'users', appUser.id, 'matches'));

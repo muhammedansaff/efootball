@@ -126,7 +126,7 @@ export default function RivalsPage() {
                             </div>
                         </div>
                         
-                        <h3 className="font-headline text-2xl text-primary">Recent Matches vs {topRival.name}</h3>
+                         <h3 className="font-headline text-2xl text-primary">Recent Matches vs {topRival.name}</h3>
                          <div className="space-y-4">
                             {matches?.filter(m => m.participants.includes(topRival!.id)).slice(0, 5).map(match => (
                                 <Card key={match.id} className="p-4">
@@ -134,9 +134,16 @@ export default function RivalsPage() {
                                         <p className="text-sm text-muted-foreground">
                                             {match.date ? new Date((match.date as any).seconds * 1000).toLocaleDateString() : ''}
                                         </p>
-                                        <p className="font-bold text-lg">
-                                            {match.team1Name} {match.team1Stats.score} - {match.team2Stats.score} {match.team2Name}
-                                        </p>
+                                        <div className="text-center">
+                                            <p className="font-bold text-lg">
+                                                {match.team1Name} {match.team1Stats.score} - {match.team2Stats.score} {match.team2Name}
+                                            </p>
+                                            {match.penaltyScore && (
+                                                <p className="text-xs text-yellow-600 dark:text-yellow-500 mt-1">
+                                                    ⚽ Penalties: {match.penaltyScore.team1} - {match.penaltyScore.team2}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
                                 </Card>
                             ))}
