@@ -64,14 +64,29 @@ export default function MatchesPage() {
         return biggestWinMatch;
     }, [matches]);
 
-    // Calculate the biggest loss (highest losing score conceded)
+    // Calculate the biggest loss (highest losing score conceded) for TODAY only
     const biggestLoss = useMemo<Match | null>(() => {
         if (!matches || matches.length === 0) return null;
+        
+        // Get today's date range (start and end of day)
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+        
+        // Filter matches for today only
+        const todayMatches = matches.filter(match => {
+            const matchDate = typeof match.date === 'string' 
+                ? new Date(match.date) 
+                : match.date.toDate();
+            return matchDate >= startOfDay && matchDate <= endOfDay;
+        });
+        
+        if (todayMatches.length === 0) return null;
         
         let maxConceded = 0;
         let biggestLossMatch: Match | null = null;
         
-        matches.forEach(match => {
+        todayMatches.forEach(match => {
             // Skip draws
             if (match.winnerId === 'draw') return;
             

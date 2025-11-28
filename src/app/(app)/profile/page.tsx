@@ -19,6 +19,19 @@ import { EditProfileDialog } from "@/components/edit-profile-dialog";
 import { useState } from "react";
 import { UploadButton } from "@/utils/uploadthing";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
+
+// Helper function to delete file from UploadThing
+const deleteFileFromUploadThing = async (url: string | undefined) => {
+    if (!url) return;
+    try {
+        await axios.delete("/api/uploadthing", {
+            data: { url }
+        });
+    } catch (error) {
+        console.error("Error deleting file:", error);
+    }
+};
 
 
 const getIcon = (iconName: string) => {
@@ -84,6 +97,9 @@ export default function ProfilePage() {
                             onClientUploadComplete={async (res) => {
                                 if (!firestore || !res?.[0]) return;
                                 try {
+                                    // Delete old banner if it exists
+                                    await deleteFileFromUploadThing(appUser.bannerUrl);
+                                    
                                     const userRef = doc(firestore, 'users', appUser.id);
                                     await updateDoc(userRef, {
                                         bannerUrl: res[0].url,
@@ -122,6 +138,9 @@ export default function ProfilePage() {
                             onClientUploadComplete={async (res) => {
                                 if (!firestore || !res?.[0]) return;
                                 try {
+                                    // Delete old banner if it exists
+                                    await deleteFileFromUploadThing(appUser.bannerUrl);
+                                    
                                     const userRef = doc(firestore, 'users', appUser.id);
                                     await updateDoc(userRef, {
                                         bannerUrl: res[0].url,
@@ -193,6 +212,9 @@ export default function ProfilePage() {
                             onClientUploadComplete={async (res) => {
                                 if (!firestore || !res?.[0]) return;
                                 try {
+                                    // Delete old leaderboard image if it exists
+                                    await deleteFileFromUploadThing(appUser.leaderboardImageUrl);
+                                    
                                     const userRef = doc(firestore, 'users', appUser.id);
                                     await updateDoc(userRef, {
                                         leaderboardImageUrl: res[0].url
@@ -239,6 +261,9 @@ export default function ProfilePage() {
                             onClientUploadComplete={async (res) => {
                                 if (!firestore || !res?.[0]) return;
                                 try {
+                                    // Delete old leaderboard audio if it exists
+                                    await deleteFileFromUploadThing(appUser.leaderboardAudioUrl);
+                                    
                                     const userRef = doc(firestore, 'users', appUser.id);
                                     await updateDoc(userRef, {
                                         leaderboardAudioUrl: res[0].url

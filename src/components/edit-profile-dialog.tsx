@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -12,6 +12,19 @@ import { doc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@/lib/types";
 import { UploadButton } from "@/utils/uploadthing";
+import axios from "axios";
+
+// Helper function to delete file from UploadThing
+const deleteFileFromUploadThing = async (url: string | undefined) => {
+    if (!url) return;
+    try {
+        await axios.delete("/api/uploadthing", {
+            data: { url }
+        });
+    } catch (error) {
+        console.error("Error deleting file:", error);
+    }
+};
 
 interface EditProfileDialogProps {
     user: User;
@@ -28,6 +41,16 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
     const [pesTeamName, setPesTeamName] = useState(user.pesTeamName || '');
     const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl);
     const [isSaving, setIsSaving] = useState(false);
+
+    // Reset state when dialog opens or user changes
+    useEffect(() => {
+        if (open) {
+            setName(user.name);
+            setRealName(user.realName || '');
+            setPesTeamName(user.pesTeamName || '');
+            setAvatarUrl(user.avatarUrl);
+        }
+    }, [open, user]);
 
     const handleSave = async () => {
         if (!firestore) return;
@@ -83,7 +106,14 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
                             endpoint="profileImage"
                             onClientUploadComplete={async (res) => {
                                 if (!res?.[0]) return;
+                                
+                                const oldAvatarUrl = avatarUrl;
+                                // Set new URL immediately to show in preview
                                 setAvatarUrl(res[0].url);
+                                
+                                // Delete old avatar if it exists (after setting new URL)
+                                await deleteFileFromUploadThing(oldAvatarUrl);
+                                
                                 toast({
                                     title: "Avatar Uploaded!",
                                     description: "Your profile picture has been uploaded successfully.",
