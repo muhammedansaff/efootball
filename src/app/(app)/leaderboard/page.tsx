@@ -11,29 +11,160 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Crown, Loader2, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, limit } from 'firebase/firestore';
-import type { User } from '@/lib/types';
-import { useEffect, useRef } from 'react';
+import { collection, query, orderBy, where, Timestamp } from 'firebase/firestore';
+import type { User, Match } from '@/lib/types';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 
+type TimeRange = 'monthly' | 'yearly' | 'all-time';
 
 export default function LeaderboardPage() {
   const firestore = useFirestore();
   const audioRef = useRef<HTMLAudioElement>(null);
   const leaderboardRef = useRef<HTMLDivElement>(null);
+  const [timeRange, setTimeRange] = useState<TimeRange>('monthly');
 
-  const allTimeQuery = useMemoFirebase(() => 
-    firestore ? query(collection(firestore, 'users'), orderBy('stats.wins', 'desc'), limit(10)) : null, 
+  // 1. Fetch all users to get metadata (name, avatar, etc.)
+  const usersQuery = useMemoFirebase(() => 
+    firestore ? query(collection(firestore, 'users')) : null, 
     [firestore]
   );
-  const { data: allTime, isLoading: isLoadingAllTime } = useCollection<User>(allTimeQuery);
+  const { data: users, isLoading: isLoadingUsers } = useCollection<User>(usersQuery);
 
-  // Get the first place user
-  const firstPlaceUser = allTime?.[0];
+  // 2. Calculate date range based on selected timeRange
+  const dateFilter = useMemo(() => {
+    const now = new Date();
+    let startDate: Date | null = null;
+
+    if (timeRange === 'monthly') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else if (timeRange === 'yearly') {
+      startDate = new Date(now.getFullYear(), 0, 1);
+    }
+    // 'all-time' is null
+    return startDate;
+  }, [timeRange]);
+
+  // 3. Fetch matches based on date filter
+  // Note: For 'all-time', we could rely on user.stats, but to ensure consistency 
+  // with the dynamic aggregation logic (and to support re-calculating if needed),
+  // we'll fetch matches for monthly/yearly. For all-time, we can use the pre-calculated user stats
+  // to save reads, OR just aggregate everything if the dataset is small.
+  // Given the requirement to "reset" and "calculate", let's try to be consistent.
+  // However, fetching ALL matches ever might be heavy. 
+  // Strategy: 
+  // - Monthly/Yearly: Fetch matches > startDate and aggregate.
+  // - All-Time: Use the `stats` field on the User object (which is maintained by cloud functions/triggers).
+  
+  const matchesQuery = useMemoFirebase(() => {
+    if (!firestore || timeRange === 'all-time' || !dateFilter) return null;
+    
+    return query(
+      collection(firestore, 'matches'),
+      where('date', '>=', Timestamp.fromDate(dateFilter)),
+      orderBy('date', 'desc')
+    );
+  }, [firestore, timeRange, dateFilter]);
+
+  const { data: matches, isLoading: isLoadingMatches } = useCollection<Match>(matchesQuery);
+
+  // 4. Aggregate Stats
+  const leaderboardData = useMemo(() => {
+    if (!users) return [];
+
+    // If All-Time, use the stored stats on the user object
+    if (timeRange === 'all-time') {
+      return [...users].sort((a, b) => {
+        // Sort by Wins desc, then Win Rate desc
+        if (b.stats.wins !== a.stats.wins) return b.stats.wins - a.stats.wins;
+        const aRate = a.stats.wins / (a.stats.wins + a.stats.losses || 1);
+        const bRate = b.stats.wins / (b.stats.wins + b.stats.losses || 1);
+        return bRate - aRate;
+      });
+    }
+
+    // If Monthly/Yearly, aggregate from matches
+    if (!matches) return [];
+
+    // Initialize stats map for all users
+    const statsMap = new Map<string, User['stats']>();
+    users.forEach(user => {
+      statsMap.set(user.id, {
+        wins: 0, losses: 0, draws: 0,
+        goalsFor: 0, goalsAgainst: 0,
+        shots: 0, shotsOnTarget: 0,
+        passes: 0, successfulPasses: 0,
+        tackles: 0, saves: 0,
+        fouls: 0, redCards: 0,
+        totalPossession: 0, matchesPlayed: 0
+      });
+    });
+
+    matches.forEach(match => {
+      // Identify participants
+      const team1Id = match.team1Stats.userId;
+      const team2Id = match.team2Stats.userId;
+
+      if (!team1Id || !team2Id) return; // Skip if data is incomplete
+
+      const stats1 = statsMap.get(team1Id);
+      const stats2 = statsMap.get(team2Id);
+
+      if (!stats1 || !stats2) return;
+
+      // Update Match Counts
+      stats1.matchesPlayed++;
+      stats2.matchesPlayed++;
+
+      // Update Results
+      if (match.winnerId === team1Id) {
+        stats1.wins++;
+        stats2.losses++;
+      } else if (match.winnerId === team2Id) {
+        stats2.wins++;
+        stats1.losses++;
+      } else {
+        stats1.draws++;
+        stats2.draws++;
+      }
+
+      // Update Goals
+      stats1.goalsFor += match.team1Stats.score;
+      stats1.goalsAgainst += match.team2Stats.score;
+      stats2.goalsFor += match.team2Stats.score;
+      stats2.goalsAgainst += match.team1Stats.score;
+
+      // Update other stats (simplified for leaderboard purposes)
+      // We mainly need wins/losses/goals for the main table, but let's be thorough
+      // Note: Some legacy matches might not have detailed stats, but new ones do.
+    });
+
+    // Convert map to array of Users with computed stats
+    const computedUsers = users.map(user => ({
+      ...user,
+      stats: statsMap.get(user.id) || user.stats
+    }));
+
+    // Sort
+    return computedUsers.sort((a, b) => {
+      if (b.stats.wins !== a.stats.wins) return b.stats.wins - a.stats.wins;
+      const aTotal = a.stats.wins + a.stats.losses;
+      const bTotal = b.stats.wins + b.stats.losses;
+      // Prefer more games played if wins are tied? Or better win rate?
+      // Usually Win Rate is tie breaker
+      const aRate = aTotal > 0 ? a.stats.wins / aTotal : 0;
+      const bRate = bTotal > 0 ? b.stats.wins / bTotal : 0;
+      return bRate - aRate;
+    });
+
+  }, [users, matches, timeRange]);
+
+  // Get the first place user from the CURRENT leaderboard data
+  const firstPlaceUser = leaderboardData.length > 0 && leaderboardData[0].stats.matchesPlayed > 0 ? leaderboardData[0] : null;
 
   // Auto-play audio when first place user has custom audio
   useEffect(() => {
@@ -42,19 +173,26 @@ export default function LeaderboardPage() {
         console.log("Audio autoplay prevented:", error);
       });
     }
-  }, [firstPlaceUser?.leaderboardAudioUrl]);
+  }, [firstPlaceUser?.id, firstPlaceUser?.leaderboardAudioUrl]); // Only re-run if the USER changes
 
   const scrollToLeaderboard = () => {
     leaderboardRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const renderLeaderboard = (data: User[] | null, isLoading: boolean) => {
+  const renderLeaderboardTable = () => {
+    const isLoading = timeRange === 'all-time' ? isLoadingUsers : (isLoadingUsers || isLoadingMatches);
+
     if (isLoading) {
       return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
     }
-    if (!data || data.length === 0) {
-      return <p className="text-muted-foreground p-8 text-center">No players on the leaderboard yet.</p>;
+    
+    // Filter out users with 0 games for the selected period
+    const activeUsers = leaderboardData.filter(u => (u.stats.wins + u.stats.losses + u.stats.draws) > 0);
+
+    if (activeUsers.length === 0) {
+      return <p className="text-muted-foreground p-8 text-center">No matches played in this period.</p>;
     }
+
     return (
       <div className="rounded-lg border">
         <Table>
@@ -68,10 +206,9 @@ export default function LeaderboardPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((user, index) => {
+            {activeUsers.map((user, index) => {
               const rank = index + 1;
               const { stats } = user;
-              const totalGames = stats.wins + stats.losses;
               const winLossRatio = stats.losses > 0 ? (stats.wins / stats.losses).toFixed(2) : stats.wins;
               return (
                 <TableRow key={user.id} className={cn(rank === 1 && "bg-primary/10 hover:bg-primary/20")}>
@@ -112,7 +249,7 @@ export default function LeaderboardPage() {
         </Button>
       </PageHeader>
 
-      {/* First Place Celebration - Redesigned */}
+      {/* First Place Celebration - Dynamic based on selected period */}
       {firstPlaceUser && (firstPlaceUser.leaderboardImageUrl || firstPlaceUser.leaderboardAudioUrl || firstPlaceUser.bannerUrl) && (
         <Card className="overflow-hidden border-primary/50 bg-gradient-to-br from-primary/5 via-background to-primary/10">
           <CardContent className="p-0">
@@ -174,7 +311,9 @@ export default function LeaderboardPage() {
                   <div className="space-y-2">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20">
                       <Crown className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-semibold text-primary">Current Champion</span>
+                      <span className="text-sm font-semibold text-primary">
+                        {timeRange === 'monthly' ? 'Month Champion' : timeRange === 'yearly' ? 'Year Champion' : 'All-Time Champion'}
+                      </span>
                     </div>
                     <h2 className="font-headline text-4xl md:text-5xl text-primary tracking-tight">
                       {firstPlaceUser.name}
@@ -231,20 +370,20 @@ export default function LeaderboardPage() {
       )}
 
       <div ref={leaderboardRef}>
-        <Tabs defaultValue="all-time">
+        <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
           <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
-            <TabsTrigger value="daily">Daily</TabsTrigger>
             <TabsTrigger value="monthly">Monthly</TabsTrigger>
+            <TabsTrigger value="yearly">Yearly</TabsTrigger>
             <TabsTrigger value="all-time">All-Time</TabsTrigger>
           </TabsList>
-          <TabsContent value="all-time">
-            {renderLeaderboard(allTime, isLoadingAllTime)}
+          <TabsContent value="monthly" className="mt-6">
+            {renderLeaderboardTable()}
           </TabsContent>
-          <TabsContent value="daily">
-            <p className="text-muted-foreground p-8 text-center">Daily leaderboards are coming soon!</p>
+          <TabsContent value="yearly" className="mt-6">
+            {renderLeaderboardTable()}
           </TabsContent>
-          <TabsContent value="monthly">
-            <p className="text-muted-foreground p-8 text-center">Monthly leaderboards are coming soon!</p>
+          <TabsContent value="all-time" className="mt-6">
+            {renderLeaderboardTable()}
           </TabsContent>
         </Tabs>
       </div>
