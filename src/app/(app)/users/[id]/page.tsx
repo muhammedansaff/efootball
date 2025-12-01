@@ -121,7 +121,6 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
                                 className="w-full h-full object-contain"
                                 autoPlay
                                 loop
-                                muted
                                 playsInline
                             />
                         ) : (
