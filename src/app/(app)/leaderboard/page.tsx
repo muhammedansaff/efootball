@@ -169,9 +169,25 @@ export default function LeaderboardPage() {
   // Auto-play audio when first place user has custom audio
   useEffect(() => {
     if (firstPlaceUser?.leaderboardAudioUrl && audioRef.current) {
-      audioRef.current.play().catch(error => {
-        console.log("Audio autoplay prevented:", error);
-      });
+      // Create a local variable to capture the current ref value
+      const audio = audioRef.current;
+      
+      // Load the new source to ensure it's ready to play
+      audio.load();
+      
+      const playPromise = audio.play();
+      
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.log("Audio autoplay prevented:", error);
+        });
+      }
+
+      return () => {
+        // Use the local variable for cleanup
+        audio.pause();
+        audio.currentTime = 0;
+      };
     }
   }, [firstPlaceUser?.id, firstPlaceUser?.leaderboardAudioUrl]); // Only re-run if the USER changes
 
